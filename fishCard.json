@@ -52,7 +52,7 @@
     "category": "Rahet",
     "difficulty": 1,
     "capture_condition": "自動捕獲",
-    "image": "removebg/Tangara.png",
+    "image": "removebg/tangara.png",
     "poker_data": {
       "rank": "9",
       "suit": "Spades",
@@ -64,7 +64,7 @@
     "category": "Rahet",
     "difficulty": 1,
     "capture_condition": "自動捕獲",
-    "image": "removebg/Tangara.png",
+    "image": "removebg/tangara.png",
     "poker_data": {
       "rank": "9",
       "suit": "Hearts",
@@ -76,7 +76,7 @@
     "category": "Rahet",
     "difficulty": 1,
     "capture_condition": "自動捕獲",
-    "image": "removebg/Tangara.png",
+    "image": "removebg/tangara.png",
     "poker_data": {
       "rank": "9",
       "suit": "Diamonds",
@@ -88,7 +88,7 @@
     "category": "Rahet",
     "difficulty": 1,
     "capture_condition": "自動捕獲",
-    "image": "removebg/Kozapo.png",
+    "image": "removebg/kozapo.png",
     "poker_data": {
       "rank": "9",
       "suit": "Clubs",
@@ -100,7 +100,7 @@
     "category": "Rahet",
     "difficulty": 1,
     "capture_condition": "自動捕獲",
-    "image": "removebg/Kozapo.png",
+    "image": "removebg/kozapo.png",
     "poker_data": {
       "rank": "8",
       "suit": "Spades",
@@ -112,7 +112,7 @@
     "category": "Rahet",
     "difficulty": 1,
     "capture_condition": "自動捕獲",
-    "image": "removebg/Kozapo.png",
+    "image": "removebg/kozapo.png",
     "poker_data": {
       "rank": "8",
       "suit": "Hearts",
@@ -124,7 +124,7 @@
     "category": "Rahet",
     "difficulty": 1,
     "capture_condition": "自動捕獲",
-    "image": "removebg/Kozapo.png",
+    "image": "removebg/kozapo.png",
     "poker_data": {
       "rank": "8",
       "suit": "Diamonds",
@@ -136,7 +136,7 @@
     "category": "Oyod",
     "difficulty": 2,
     "capture_condition": "點數 > 1",
-    "image": "removebg/Malan.png",
+    "image": "removebg/malan.png",
     "poker_data": {
       "rank": "J",
       "suit": "Spades",
@@ -148,7 +148,7 @@
     "category": "Oyod",
     "difficulty": 2,
     "capture_condition": "點數 > 1",
-    "image": "removebg/Malan.png",
+    "image": "removebg/malan.png",
     "poker_data": {
       "rank": "Q",
       "suit": "Hearts",
@@ -160,7 +160,7 @@
     "category": "Oyod",
     "difficulty": 2,
     "capture_condition": "點數 > 1",
-    "image": "removebg/Malan.png",
+    "image": "removebg/malan.png",
     "poker_data": {
       "rank": "K",
       "suit": "Diamonds",
@@ -172,7 +172,7 @@
     "category": "Oyod",
     "difficulty": 3,
     "capture_condition": "點數 > 2",
-    "image": "removebg/Mahabteng.png",
+    "image": "removebg/mahabteng.png",
     "poker_data": {
       "rank": "A",
       "suit": "Spades",
@@ -184,7 +184,7 @@
     "category": "Oyod",
     "difficulty": 3,
     "capture_condition": "點數 > 2",
-    "image": "removebg/Mahabteng.png",
+    "image": "removebg/mahabteng.png",
     "poker_data": {
       "rank": "A",
       "suit": "Hearts",
@@ -196,7 +196,7 @@
     "category": "Oyod",
     "difficulty": 5,
     "capture_condition": "點數 > 3",
-    "image": "removebg/Ilek.png",
+    "image": "removebg/ilek.png",
     "poker_data": {
       "rank": "A",
       "suit": "Diamonds",
@@ -208,7 +208,7 @@
     "category": "Rahet",
     "difficulty": 2,
     "capture_condition": "點數 > 1",
-    "image": "removebg/Cirow.png",
+    "image": "removebg/cirow.png",
     "poker_data": {
       "rank": "8",
       "suit": "Clubs",
@@ -220,7 +220,7 @@
     "category": "Rahet",
     "difficulty": 2,
     "capture_condition": "點數 > 1",
-    "image": "removebg/Cirow.png",
+    "image": "removebg/cirow.png",
     "poker_data": {
       "rank": "7",
       "suit": "Spades",
@@ -232,7 +232,7 @@
     "category": "Rahet",
     "difficulty": 2,
     "capture_condition": "點數 > 1",
-    "image": "removebg/Cirow.png",
+    "image": "removebg/cirow.png",
     "poker_data": {
       "rank": "7",
       "suit": "Hearts",
@@ -244,7 +244,7 @@
     "category": "Rahet",
     "difficulty": 2,
     "capture_condition": "點數 > 1",
-    "image": "removebg/Cirow.png",
+    "image": "removebg/cirow.png",
     "poker_data": {
       "rank": "7",
       "suit": "Diamonds",
@@ -256,7 +256,7 @@
     "category": "Oyod",
     "difficulty": 2,
     "capture_condition": "點數 > 1",
-    "image": "removebg/Veras.png",
+    "image": "removebg/veras.png",
     "poker_data": {
       "rank": "A",
       "suit": "Clubs",
@@ -268,7 +268,7 @@
     "category": "Oyod",
     "difficulty": 2,
     "capture_condition": "點數 > 1",
-    "image": "removebg/Veras.png",
+    "image": "removebg/veras.png",
     "poker_data": {
       "rank": "K",
       "suit": "Spades",
@@ -280,7 +280,7 @@
     "category": "Rahet",
     "difficulty": 2,
     "capture_condition": "點數 > 1",
-    "image": "removebg/Kowaos.png",
+    "image": "removebg/kowaos.png",
     "poker_data": {
       "rank": "7",
       "suit": "Clubs",
@@ -292,7 +292,7 @@
     "category": "Rahet",
     "difficulty": 2,
     "capture_condition": "點數 > 1",
-    "image": "removebg/Kowaos.png",
+    "image": "removebg/kowaos.png",
     "poker_data": {
       "rank": "6",
       "suit": "Spades",
@@ -304,7 +304,7 @@
     "category": "Rahet",
     "difficulty": 2,
     "capture_condition": "點數 > 1",
-    "image": "removebg/Kowaos.png",
+    "image": "removebg/kowaos.png",
     "poker_data": {
       "rank": "6",
       "suit": "Hearts",
@@ -316,7 +316,7 @@
     "category": "Rahet",
     "difficulty": 3,
     "capture_condition": "點數 > 2",
-    "image": "removebg/Angsa.png",
+    "image": "removebg/angsa.png",
     "poker_data": {
       "rank": "6",
       "suit": "Diamonds",
@@ -328,7 +328,7 @@
     "category": "Rahet",
     "difficulty": 3,
     "capture_condition": "點數 > 2",
-    "image": "removebg/Angsa.png",
+    "image": "removebg/angsa.png",
     "poker_data": {
       "rank": "6",
       "suit": "Clubs",
@@ -340,7 +340,7 @@
     "category": "Rahet",
     "difficulty": 3,
     "capture_condition": "點數 > 2",
-    "image": "removebg/Angsa.png",
+    "image": "removebg/angsa.png",
     "poker_data": {
       "rank": "5",
       "suit": "Spades",
@@ -352,7 +352,7 @@
     "category": "Rahet",
     "difficulty": 4,
     "capture_condition": "點數 > 2",
-    "image": "removebg/Anid.png",
+    "image": "removebg/anid.png",
     "poker_data": {
       "rank": "5",
       "suit": "Hearts",
@@ -364,7 +364,7 @@
     "category": "Rahet",
     "difficulty": 4,
     "capture_condition": "點數 > 2",
-    "image": "removebg/Anid.png",
+    "image": "removebg/anid.png",
     "poker_data": {
       "rank": "5",
       "suit": "Diamonds",
@@ -376,7 +376,7 @@
     "category": "Rahet",
     "difficulty": 4,
     "capture_condition": "點數 > 2",
-    "image": "removebg/Anid.png",
+    "image": "removebg/anid.png",
     "poker_data": {
       "rank": "5",
       "suit": "Clubs",
@@ -388,7 +388,7 @@
     "category": "Oyod",
     "difficulty": 2,
     "capture_condition": "點數 > 1",
-    "image": "removebg/Kosikosi.png",
+    "image": "removebg/kosikosi.png",
     "poker_data": {
       "rank": "J",
       "suit": "Hearts",
@@ -400,7 +400,7 @@
     "category": "Oyod",
     "difficulty": 2,
     "capture_condition": "點數 > 1",
-    "image": "removebg/Kosikosi.png",
+    "image": "removebg/kosikosi.png",
     "poker_data": {
       "rank": "Q",
       "suit": "Diamonds",
@@ -412,7 +412,7 @@
     "category": "Oyod",
     "difficulty": 2,
     "capture_condition": "點數 > 1",
-    "image": "removebg/Kosikosi.png",
+    "image": "removebg/kosikosi.png",
     "poker_data": {
       "rank": "K",
       "suit": "Clubs",
@@ -424,7 +424,7 @@
     "category": "Oyod",
     "difficulty": 2,
     "capture_condition": "點數 > 1",
-    "image": "removebg/Amingang.png",
+    "image": "removebg/amingan.png",
     "poker_data": {
       "rank": "J",
       "suit": "Diamonds",
@@ -436,7 +436,7 @@
     "category": "Oyod",
     "difficulty": 2,
     "capture_condition": "點數 > 1",
-    "image": "removebg/Amingang.png",
+    "image": "removebg/amingan.png",
     "poker_data": {
       "rank": "Q",
       "suit": "Clubs",
@@ -448,7 +448,7 @@
     "category": "Rahet",
     "difficulty": 5,
     "capture_condition": "點數 > 3",
-    "image": "removebg/Cilat.png",
+    "image": "removebg/cilat.png",
     "poker_data": {
       "rank": "4",
       "suit": "Spades",
@@ -460,7 +460,7 @@
     "category": "Rahet",
     "difficulty": 5,
     "capture_condition": "點數 > 3",
-    "image": "removebg/Cilat.png",
+    "image": "removebg/cilat.png",
     "poker_data": {
       "rank": "4",
       "suit": "Hearts",
@@ -472,7 +472,7 @@
     "category": "Rahet (raraker)",
     "difficulty": 4,
     "capture_condition": "點數 > 2",
-    "image": "removebg/Tapez.png",
+    "image": "removebg/tapez.png",
     "poker_data": {
       "rank": "4",
       "suit": "Diamonds",
@@ -484,7 +484,7 @@
     "category": "Rahet (raraker)",
     "difficulty": 4,
     "capture_condition": "點數 > 2",
-    "image": "removebg/Tapez.png",
+    "image": "removebg/tapez.png",
     "poker_data": {
       "rank": "4",
       "suit": "Clubs",
@@ -496,7 +496,7 @@
     "category": "Oyod",
     "difficulty": 2,
     "capture_condition": "點數 > 1",
-    "image": "removebg/Savali.png",
+    "image": "removebg/savali.png",
     "poker_data": {
       "rank": "J",
       "suit": "Clubs",
@@ -508,7 +508,7 @@
     "category": "Oyod",
     "difficulty": 2,
     "capture_condition": "點數 > 1",
-    "image": "removebg/Savali.png",
+    "image": "removebg/savali.png",
     "poker_data": {
       "rank": "Q",
       "suit": "Spades",
@@ -520,7 +520,7 @@
     "category": "Rahet (raraker)",
     "difficulty": 5,
     "capture_condition": "點數 > 3",
-    "image": "removebg/Acyod.png",
+    "image": "removebg/acyod.png",
     "poker_data": {
       "rank": "3",
       "suit": "Spades",
@@ -532,7 +532,7 @@
     "category": "Rahet (raraker)",
     "difficulty": 5,
     "capture_condition": "點數 > 3",
-    "image": "removebg/Acyod.png",
+    "image": "removebg/acyod.png",
     "poker_data": {
       "rank": "3",
       "suit": "Hearts",
@@ -544,7 +544,7 @@
     "category": "Rahet",
     "difficulty": 1,
     "capture_condition": "自動捕獲",
-    "image": "removebg/Lalavok.png",
+    "image": "removebg/lalavok.png",
     "poker_data": {
       "rank": "3",
       "suit": "Diamonds",
@@ -556,7 +556,7 @@
     "category": "Rahet",
     "difficulty": 1,
     "capture_condition": "自動捕獲",
-    "image": "removebg/Lalavok.png",
+    "image": "removebg/lalavok.png",
     "poker_data": {
       "rank": "3",
       "suit": "Clubs",
@@ -568,7 +568,7 @@
     "category": "Rahet",
     "difficulty": 1,
     "capture_condition": "自動捕獲",
-    "image": "removebg/Lalavok.png",
+    "image": "removebg/lalavok.png",
     "poker_data": {
       "rank": "2",
       "suit": "Spades",
@@ -580,7 +580,7 @@
     "category": "Oyod",
     "difficulty": 5,
     "capture_condition": "點數 > 3",
-    "image": "removebg/Arawa.png",
+    "image": "removebg/arawa.png",
     "poker_data": {
       "rank": "K",
       "suit": "Hearts",
@@ -592,7 +592,7 @@
     "category": "Rahet",
     "difficulty": 1,
     "capture_condition": "自動捕獲",
-    "image": "removebg/Takazit.png",
+    "image": "removebg/takazit.png",
     "poker_data": {
       "rank": "2",
       "suit": "Hearts",
@@ -604,7 +604,7 @@
     "category": "Rahet",
     "difficulty": 1,
     "capture_condition": "自動捕獲",
-    "image": "removebg/Takazit.png",
+    "image": "removebg/takazit.png",
     "poker_data": {
       "rank": "2",
       "suit": "Diamonds",
@@ -616,7 +616,7 @@
     "category": "Rahet",
     "difficulty": 1,
     "capture_condition": "自動捕獲",
-    "image": "removebg/Takazit.png",
+    "image": "removebg/takazit.png",
     "poker_data": {
       "rank": "2",
       "suit": "Clubs",
