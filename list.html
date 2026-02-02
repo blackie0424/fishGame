@@ -62,57 +62,67 @@
     <div class="deck-grid" id="deck"></div>
 
     <script>
-        const rankWeights = { "2":2, "3":3, "4":4, "5":5, "6":6, "7":7, "8":8, "9":9, "10":10, "J":11, "Q":12, "K":13, "A":14 };
-        const suitWeights = { "Spades":4, "Hearts":3, "Diamonds":2, "Clubs":1 };
-        const suitSymbols = { 'Spades':'♠','Hearts':'♥','Diamonds':'♦','Clubs':'♣' };
+    // 1. 定義新的權重順序：A(1) < 2 < 3 ... < 10 < J(11) < Q(12) < K(13)
+    const rankWeights = { 
+        "A": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, 
+        "7": 7, "8": 8, "9": 9, "10": 10, "J": 11, "Q": 12, "K": 13 
+    };
 
-        async function init() {
-            try {
-                // 1. 讀取外部 JSON 檔案
-                const response = await fetch('./fishCard.json');
-                const data = await response.json();
+    // 花色順序：黑桃(4) > 紅心(3) > 方塊(2) > 梅花(1) (同一數字時的排列)
+    const suitWeights = { "Spades": 4, "Hearts": 3, "Diamonds": 2, "Clubs": 1 };
+    const suitSymbols = { 'Spades': '♠', 'Hearts': '♥', 'Diamonds': '♦', 'Clubs': '♣' };
 
-                // 2. 排序：點數大到小，花色黑紅方梅
-                data.sort((a, b) => {
-                    if (rankWeights[a.poker_data.rank] !== rankWeights[b.poker_data.rank]) {
-                        return rankWeights[b.poker_data.rank] - rankWeights[a.poker_data.rank];
-                    }
-                    return suitWeights[b.poker_data.suit] - suitWeights[a.poker_data.suit];
-                });
+    async function init() {
+        try {
+            const response = await fetch('./fishCard.json');
+            const data = await response.json();
 
-                // 3. 渲染
-                const deckContainer = document.getElementById('deck');
-                data.forEach(fish => {
-                    const symbol = suitSymbols[fish.poker_data.suit];
-                    const isRed = (fish.poker_data.suit === 'Hearts' || fish.poker_data.suit === 'Diamonds');
-                    
-                    const cardEl = document.createElement('div');
-                    cardEl.className = 'scene';
-                    cardEl.innerHTML = `
-                        <div class="card-wrapper">
-                            <div class="card" onclick="this.classList.toggle('is-flipped')">
-                                <div class="card-face card-front">
-                                    <div class="element poker-info anchor-center ${isRed ? 'suit-red':'suit-black'}">${symbol}${fish.poker_data.rank}</div>
-                                    <div class="element category">${fish.category}</div>
-                                    <div class="element stars">${'★'.repeat(fish.difficulty)}</div>
-                                    <div class="element fish-illustration anchor-center">
-                                        <img src="${fish.image}" style="max-width:100%; max-height:100%; object-fit:contain;">
-                                    </div>
-                                    <div class="element fish-name anchor-center">${fish.name}</div>
-                                    <div class="element condition anchor-center">${fish.capture_condition}</div>
+            // 2. 執行排序邏輯：改為由小到大排列 (a - b)
+            data.sort((a, b) => {
+                const rankA = rankWeights[a.poker_data.rank];
+                const rankB = rankWeights[b.poker_data.rank];
+
+                if (rankA !== rankB) {
+                    return rankA - rankB; // 點數小的排在前面 (A 最小)
+                }
+                // 若點數相同，則按花色權重由大到小排 (黑桃 > 紅心 > 方塊 > 梅花)
+                return suitWeights[b.poker_data.suit] - suitWeights[a.poker_data.suit];
+            });
+
+            // 3. 渲染卡牌
+            const deckContainer = document.getElementById('deck');
+            deckContainer.innerHTML = ''; // 清空現有內容
+
+            data.forEach(fish => {
+                const symbol = suitSymbols[fish.poker_data.suit];
+                const isRed = (fish.poker_data.suit === 'Hearts' || fish.poker_data.suit === 'Diamonds');
+                
+                const cardEl = document.createElement('div');
+                cardEl.className = 'scene';
+                cardEl.innerHTML = `
+                    <div class="card-wrapper">
+                        <div class="card" onclick="this.classList.toggle('is-flipped')">
+                            <div class="card-face card-front">
+                                <div class="element poker-info anchor-center ${isRed ? 'suit-red':'suit-black'}">${symbol}${fish.poker_data.rank}</div>
+                                <div class="element category">${fish.category}</div>
+                                <div class="element stars">${'★'.repeat(fish.difficulty)}</div>
+                                <div class="element fish-illustration anchor-center">
+                                    <img src="${fish.image}" style="max-width:100%; max-height:100%; object-fit:contain;">
                                 </div>
-                                <div class="card-face card-back"></div>
+                                <div class="element fish-name anchor-center">${fish.name}</div>
+                                <div class="element condition anchor-center">${fish.capture_condition}</div>
                             </div>
-                        </div>`;
-                    deckContainer.appendChild(cardEl);
-                });
-            } catch (err) {
-                console.error("讀取 fishCard.json 失敗，請確認檔案路徑或是否處於 Server 環境執行。", err);
-                document.body.innerHTML += `<p style="color:red">Error: 無法載入 JSON 檔案。</p>`;
-            }
+                            <div class="card-face card-back"></div>
+                        </div>
+                    </div>`;
+                deckContainer.appendChild(cardEl);
+            });
+        } catch (err) {
+            console.error("無法載入資料", err);
         }
+    }
 
-        init();
+    init();
     </script>
 </body>
 </html>
