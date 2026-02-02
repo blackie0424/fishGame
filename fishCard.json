@@ -1,0 +1,626 @@
+[
+  {
+    "name": "lagarow",
+    "category": "Rahet",
+    "difficulty": 1,
+    "capture_condition": "自動捕獲",
+    "image": "removebg/lagarow.png",
+    "poker_data": {
+      "rank": "10",
+      "suit": "Spades",
+      "display": "黑桃 10"
+    }
+  },
+  {
+    "name": "lagarow",
+    "category": "Rahet",
+    "difficulty": 1,
+    "capture_condition": "自動捕獲",
+    "image": "removebg/lagarow.png",
+    "poker_data": {
+      "rank": "10",
+      "suit": "Hearts",
+      "display": "紅心 10"
+    }
+  },
+  {
+    "name": "lagarow",
+    "category": "Rahet",
+    "difficulty": 1,
+    "capture_condition": "自動捕獲",
+    "image": "removebg/lagarow.png",
+    "poker_data": {
+      "rank": "10",
+      "suit": "Diamonds",
+      "display": "方塊 10"
+    }
+  },
+  {
+    "name": "lagarow",
+    "category": "Rahet",
+    "difficulty": 1,
+    "capture_condition": "自動捕獲",
+    "image": "removebg/lagarow.png",
+    "poker_data": {
+      "rank": "10",
+      "suit": "Clubs",
+      "display": "梅花 10"
+    }
+  },
+  {
+    "name": "Tangara",
+    "category": "Rahet",
+    "difficulty": 1,
+    "capture_condition": "自動捕獲",
+    "image": "removebg/Tangara.png",
+    "poker_data": {
+      "rank": "9",
+      "suit": "Spades",
+      "display": "黑桃 9"
+    }
+  },
+  {
+    "name": "Tangara",
+    "category": "Rahet",
+    "difficulty": 1,
+    "capture_condition": "自動捕獲",
+    "image": "removebg/Tangara.png",
+    "poker_data": {
+      "rank": "9",
+      "suit": "Hearts",
+      "display": "紅心 9"
+    }
+  },
+  {
+    "name": "Tangara",
+    "category": "Rahet",
+    "difficulty": 1,
+    "capture_condition": "自動捕獲",
+    "image": "removebg/Tangara.png",
+    "poker_data": {
+      "rank": "9",
+      "suit": "Diamonds",
+      "display": "方塊 9"
+    }
+  },
+  {
+    "name": "Kozapo",
+    "category": "Rahet",
+    "difficulty": 1,
+    "capture_condition": "自動捕獲",
+    "image": "removebg/Kozapo.png",
+    "poker_data": {
+      "rank": "9",
+      "suit": "Clubs",
+      "display": "梅花 9"
+    }
+  },
+  {
+    "name": "Kozapo",
+    "category": "Rahet",
+    "difficulty": 1,
+    "capture_condition": "自動捕獲",
+    "image": "removebg/Kozapo.png",
+    "poker_data": {
+      "rank": "8",
+      "suit": "Spades",
+      "display": "黑桃 8"
+    }
+  },
+  {
+    "name": "Kozapo",
+    "category": "Rahet",
+    "difficulty": 1,
+    "capture_condition": "自動捕獲",
+    "image": "removebg/Kozapo.png",
+    "poker_data": {
+      "rank": "8",
+      "suit": "Hearts",
+      "display": "紅心 8"
+    }
+  },
+  {
+    "name": "Kozapo",
+    "category": "Rahet",
+    "difficulty": 1,
+    "capture_condition": "自動捕獲",
+    "image": "removebg/Kozapo.png",
+    "poker_data": {
+      "rank": "8",
+      "suit": "Diamonds",
+      "display": "方塊 8"
+    }
+  },
+  {
+    "name": "Malan",
+    "category": "Oyod",
+    "difficulty": 2,
+    "capture_condition": "點數 > 1",
+    "image": "removebg/Malan.png",
+    "poker_data": {
+      "rank": "J",
+      "suit": "Spades",
+      "display": "黑桃 J"
+    }
+  },
+  {
+    "name": "Malan",
+    "category": "Oyod",
+    "difficulty": 2,
+    "capture_condition": "點數 > 1",
+    "image": "removebg/Malan.png",
+    "poker_data": {
+      "rank": "Q",
+      "suit": "Hearts",
+      "display": "紅心 Q"
+    }
+  },
+  {
+    "name": "Malan",
+    "category": "Oyod",
+    "difficulty": 2,
+    "capture_condition": "點數 > 1",
+    "image": "removebg/Malan.png",
+    "poker_data": {
+      "rank": "K",
+      "suit": "Diamonds",
+      "display": "方塊 K"
+    }
+  },
+  {
+    "name": "Mahabteng",
+    "category": "Oyod",
+    "difficulty": 3,
+    "capture_condition": "點數 > 2",
+    "image": "removebg/Mahabteng.png",
+    "poker_data": {
+      "rank": "A",
+      "suit": "Spades",
+      "display": "黑桃 A"
+    }
+  },
+  {
+    "name": "Mahabteng",
+    "category": "Oyod",
+    "difficulty": 3,
+    "capture_condition": "點數 > 2",
+    "image": "removebg/Mahabteng.png",
+    "poker_data": {
+      "rank": "A",
+      "suit": "Hearts",
+      "display": "紅心 A"
+    }
+  },
+  {
+    "name": "Ilek",
+    "category": "Oyod",
+    "difficulty": 5,
+    "capture_condition": "點數 > 3",
+    "image": "removebg/Ilek.png",
+    "poker_data": {
+      "rank": "A",
+      "suit": "Diamonds",
+      "display": "方塊 A"
+    }
+  },
+  {
+    "name": "Cirow",
+    "category": "Rahet",
+    "difficulty": 2,
+    "capture_condition": "點數 > 1",
+    "image": "removebg/Cirow.png",
+    "poker_data": {
+      "rank": "8",
+      "suit": "Clubs",
+      "display": "梅花 8"
+    }
+  },
+  {
+    "name": "Cirow",
+    "category": "Rahet",
+    "difficulty": 2,
+    "capture_condition": "點數 > 1",
+    "image": "removebg/Cirow.png",
+    "poker_data": {
+      "rank": "7",
+      "suit": "Spades",
+      "display": "黑桃 7"
+    }
+  },
+  {
+    "name": "Cirow",
+    "category": "Rahet",
+    "difficulty": 2,
+    "capture_condition": "點數 > 1",
+    "image": "removebg/Cirow.png",
+    "poker_data": {
+      "rank": "7",
+      "suit": "Hearts",
+      "display": "紅心 7"
+    }
+  },
+  {
+    "name": "Cirow",
+    "category": "Rahet",
+    "difficulty": 2,
+    "capture_condition": "點數 > 1",
+    "image": "removebg/Cirow.png",
+    "poker_data": {
+      "rank": "7",
+      "suit": "Diamonds",
+      "display": "方塊 7"
+    }
+  },
+  {
+    "name": "Veras",
+    "category": "Oyod",
+    "difficulty": 2,
+    "capture_condition": "點數 > 1",
+    "image": "removebg/Veras.png",
+    "poker_data": {
+      "rank": "A",
+      "suit": "Clubs",
+      "display": "梅花 A"
+    }
+  },
+  {
+    "name": "Veras",
+    "category": "Oyod",
+    "difficulty": 2,
+    "capture_condition": "點數 > 1",
+    "image": "removebg/Veras.png",
+    "poker_data": {
+      "rank": "K",
+      "suit": "Spades",
+      "display": "黑桃 K"
+    }
+  },
+  {
+    "name": "Kowaos",
+    "category": "Rahet",
+    "difficulty": 2,
+    "capture_condition": "點數 > 1",
+    "image": "removebg/Kowaos.png",
+    "poker_data": {
+      "rank": "7",
+      "suit": "Clubs",
+      "display": "梅花 7"
+    }
+  },
+  {
+    "name": "Kowaos",
+    "category": "Rahet",
+    "difficulty": 2,
+    "capture_condition": "點數 > 1",
+    "image": "removebg/Kowaos.png",
+    "poker_data": {
+      "rank": "6",
+      "suit": "Spades",
+      "display": "黑桃 6"
+    }
+  },
+  {
+    "name": "Kowaos",
+    "category": "Rahet",
+    "difficulty": 2,
+    "capture_condition": "點數 > 1",
+    "image": "removebg/Kowaos.png",
+    "poker_data": {
+      "rank": "6",
+      "suit": "Hearts",
+      "display": "紅心 6"
+    }
+  },
+  {
+    "name": "Angsa",
+    "category": "Rahet",
+    "difficulty": 3,
+    "capture_condition": "點數 > 2",
+    "image": "removebg/Angsa.png",
+    "poker_data": {
+      "rank": "6",
+      "suit": "Diamonds",
+      "display": "方塊 6"
+    }
+  },
+  {
+    "name": "Angsa",
+    "category": "Rahet",
+    "difficulty": 3,
+    "capture_condition": "點數 > 2",
+    "image": "removebg/Angsa.png",
+    "poker_data": {
+      "rank": "6",
+      "suit": "Clubs",
+      "display": "梅花 6"
+    }
+  },
+  {
+    "name": "Angsa",
+    "category": "Rahet",
+    "difficulty": 3,
+    "capture_condition": "點數 > 2",
+    "image": "removebg/Angsa.png",
+    "poker_data": {
+      "rank": "5",
+      "suit": "Spades",
+      "display": "黑桃 5"
+    }
+  },
+  {
+    "name": "Anid",
+    "category": "Rahet",
+    "difficulty": 4,
+    "capture_condition": "點數 > 2",
+    "image": "removebg/Anid.png",
+    "poker_data": {
+      "rank": "5",
+      "suit": "Hearts",
+      "display": "紅心 5"
+    }
+  },
+  {
+    "name": "Anid",
+    "category": "Rahet",
+    "difficulty": 4,
+    "capture_condition": "點數 > 2",
+    "image": "removebg/Anid.png",
+    "poker_data": {
+      "rank": "5",
+      "suit": "Diamonds",
+      "display": "方塊 5"
+    }
+  },
+  {
+    "name": "Anid",
+    "category": "Rahet",
+    "difficulty": 4,
+    "capture_condition": "點數 > 2",
+    "image": "removebg/Anid.png",
+    "poker_data": {
+      "rank": "5",
+      "suit": "Clubs",
+      "display": "梅花 5"
+    }
+  },
+  {
+    "name": "Kosikosi",
+    "category": "Oyod",
+    "difficulty": 2,
+    "capture_condition": "點數 > 1",
+    "image": "removebg/Kosikosi.png",
+    "poker_data": {
+      "rank": "J",
+      "suit": "Hearts",
+      "display": "紅心 J"
+    }
+  },
+  {
+    "name": "Kosikosi",
+    "category": "Oyod",
+    "difficulty": 2,
+    "capture_condition": "點數 > 1",
+    "image": "removebg/Kosikosi.png",
+    "poker_data": {
+      "rank": "Q",
+      "suit": "Diamonds",
+      "display": "方塊 Q"
+    }
+  },
+  {
+    "name": "Kosikosi",
+    "category": "Oyod",
+    "difficulty": 2,
+    "capture_condition": "點數 > 1",
+    "image": "removebg/Kosikosi.png",
+    "poker_data": {
+      "rank": "K",
+      "suit": "Clubs",
+      "display": "梅花 K"
+    }
+  },
+  {
+    "name": "Amingang",
+    "category": "Oyod",
+    "difficulty": 2,
+    "capture_condition": "點數 > 1",
+    "image": "removebg/Amingang.png",
+    "poker_data": {
+      "rank": "J",
+      "suit": "Diamonds",
+      "display": "方塊 J"
+    }
+  },
+  {
+    "name": "Amingang",
+    "category": "Oyod",
+    "difficulty": 2,
+    "capture_condition": "點數 > 1",
+    "image": "removebg/Amingang.png",
+    "poker_data": {
+      "rank": "Q",
+      "suit": "Clubs",
+      "display": "梅花 Q"
+    }
+  },
+  {
+    "name": "Cilat",
+    "category": "Rahet",
+    "difficulty": 5,
+    "capture_condition": "點數 > 3",
+    "image": "removebg/Cilat.png",
+    "poker_data": {
+      "rank": "4",
+      "suit": "Spades",
+      "display": "黑桃 4"
+    }
+  },
+  {
+    "name": "Cilat",
+    "category": "Rahet",
+    "difficulty": 5,
+    "capture_condition": "點數 > 3",
+    "image": "removebg/Cilat.png",
+    "poker_data": {
+      "rank": "4",
+      "suit": "Hearts",
+      "display": "紅心 4"
+    }
+  },
+  {
+    "name": "Tapez",
+    "category": "Rahet (raraker)",
+    "difficulty": 4,
+    "capture_condition": "點數 > 2",
+    "image": "removebg/Tapez.png",
+    "poker_data": {
+      "rank": "4",
+      "suit": "Diamonds",
+      "display": "方塊 4"
+    }
+  },
+  {
+    "name": "Tapez",
+    "category": "Rahet (raraker)",
+    "difficulty": 4,
+    "capture_condition": "點數 > 2",
+    "image": "removebg/Tapez.png",
+    "poker_data": {
+      "rank": "4",
+      "suit": "Clubs",
+      "display": "梅花 4"
+    }
+  },
+  {
+    "name": "Savali",
+    "category": "Oyod",
+    "difficulty": 2,
+    "capture_condition": "點數 > 1",
+    "image": "removebg/Savali.png",
+    "poker_data": {
+      "rank": "J",
+      "suit": "Clubs",
+      "display": "梅花 J"
+    }
+  },
+  {
+    "name": "Savali",
+    "category": "Oyod",
+    "difficulty": 2,
+    "capture_condition": "點數 > 1",
+    "image": "removebg/Savali.png",
+    "poker_data": {
+      "rank": "Q",
+      "suit": "Spades",
+      "display": "黑桃 Q"
+    }
+  },
+  {
+    "name": "Acyod",
+    "category": "Rahet (raraker)",
+    "difficulty": 5,
+    "capture_condition": "點數 > 3",
+    "image": "removebg/Acyod.png",
+    "poker_data": {
+      "rank": "3",
+      "suit": "Spades",
+      "display": "黑桃 3"
+    }
+  },
+  {
+    "name": "Acyod",
+    "category": "Rahet (raraker)",
+    "difficulty": 5,
+    "capture_condition": "點數 > 3",
+    "image": "removebg/Acyod.png",
+    "poker_data": {
+      "rank": "3",
+      "suit": "Hearts",
+      "display": "紅心 3"
+    }
+  },
+  {
+    "name": "Lalavok",
+    "category": "Rahet",
+    "difficulty": 1,
+    "capture_condition": "自動捕獲",
+    "image": "removebg/Lalavok.png",
+    "poker_data": {
+      "rank": "3",
+      "suit": "Diamonds",
+      "display": "方塊 3"
+    }
+  },
+  {
+    "name": "Lalavok",
+    "category": "Rahet",
+    "difficulty": 1,
+    "capture_condition": "自動捕獲",
+    "image": "removebg/Lalavok.png",
+    "poker_data": {
+      "rank": "3",
+      "suit": "Clubs",
+      "display": "梅花 3"
+    }
+  },
+  {
+    "name": "Lalavok",
+    "category": "Rahet",
+    "difficulty": 1,
+    "capture_condition": "自動捕獲",
+    "image": "removebg/Lalavok.png",
+    "poker_data": {
+      "rank": "2",
+      "suit": "Spades",
+      "display": "黑桃 2"
+    }
+  },
+  {
+    "name": "Arawa",
+    "category": "Oyod",
+    "difficulty": 5,
+    "capture_condition": "點數 > 3",
+    "image": "removebg/Arawa.png",
+    "poker_data": {
+      "rank": "K",
+      "suit": "Hearts",
+      "display": "紅心 K"
+    }
+  },
+  {
+    "name": "Takazit",
+    "category": "Rahet",
+    "difficulty": 1,
+    "capture_condition": "自動捕獲",
+    "image": "removebg/Takazit.png",
+    "poker_data": {
+      "rank": "2",
+      "suit": "Hearts",
+      "display": "紅心 2"
+    }
+  },
+  {
+    "name": "Takazit",
+    "category": "Rahet",
+    "difficulty": 1,
+    "capture_condition": "自動捕獲",
+    "image": "removebg/Takazit.png",
+    "poker_data": {
+      "rank": "2",
+      "suit": "Diamonds",
+      "display": "方塊 2"
+    }
+  },
+  {
+    "name": "Takazit",
+    "category": "Rahet",
+    "difficulty": 1,
+    "capture_condition": "自動捕獲",
+    "image": "removebg/Takazit.png",
+    "poker_data": {
+      "rank": "2",
+      "suit": "Clubs",
+      "display": "梅花 2"
+    }
+  }
+]
