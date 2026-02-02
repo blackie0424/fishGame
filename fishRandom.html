@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>Tao Fish - Random Draw</title>
+    <style>
+        :root {
+            --card-w: 825px;
+            --card-h: 1125px;
+            --render-scale: 0.45; 
+        }
+
+        * { box-sizing: border-box; }
+        body { 
+            background: #1a1a1a; 
+            color: #ecf0f1; 
+            font-family: 'JetBrains Mono', sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .draw-btn {
+            padding: 15px 40px;
+            font-size: 24px;
+            font-weight: bold;
+            background: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4);
+            transition: transform 0.2s, background 0.2s;
+            margin-bottom: 40px;
+            z-index: 10;
+        }
+
+        .draw-btn:hover { background: #27ae60; transform: scale(1.05); }
+        .draw-btn:active { transform: scale(0.95); }
+
+        /* 卡牌場景 */
+        .scene {
+            width: calc(var(--card-w) * var(--render-scale));
+            height: calc(var(--card-h) * var(--render-scale));
+            perspective: 2000px;
+            visibility: hidden; /* 初始隱藏 */
+        }
+
+        .card-wrapper {
+            width: var(--card-w);
+            height: var(--card-h);
+            transform: scale(var(--render-scale));
+            transform-origin: top left;
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+
+        /* 抽牌動畫效果 */
+        .card.drawing {
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(100px) rotateX(-20deg); opacity: 0; }
+            to { transform: translateY(0) rotateX(0); opacity: 1; }
+        }
+
+        /* 正反面設定 */
+        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 40px; border: 4px solid #34495e; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .card-front { background-color: #fff; background-image: url('template_v1.png'); background-size: 100% 100%; color: #2f3542; }
+        
+        /* 內容定位與樣式 (延用您之前的 CSS) */
+        .element { position: absolute; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+        .anchor-center { transform: translate(-50%, -50%); }
+        .poker-info { left: 110px; top: 110px; width: 120px; font-size: 90px; font-weight: bold; }
+        .category { left: 720px; top: 80px; font-size: 45px; font-weight: bold; transform: translateX(-100%); }
+        .stars { left: 720px; top: 130px; color: #f1c40f; font-size: 35px; transform: translateX(-100%); }
+        .fish-illustration { left: 412px; top: 480px; width: 650px; height: 500px; }
+        .fish-name { left: 412px; top: 830px; width: 600px; font-size: 75px; font-weight: bold; }
+        .condition { left: 412px; top: 970px; width: 700px; font-size: 45px; text-align: center; font-weight: 600; }
+        .suit-red { color: #e84118; }
+        .suit-black { color: #2f3542; }
+
+    </style>
+</head>
+<body>
+
+    <button class="draw-btn" onclick="drawCard()">🎣 拋竿抽魚！</button>
+
+    <div class="scene" id="card-scene">
+        <div class="card-wrapper">
+            <div class="card" id="card-element">
+                <div class="card-face card-front" id="card-content">
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let fullDeck = [];
+        const suitSymbols = { 'Spades':'♠','Hearts':'♥','Diamonds':'♦','Clubs':'♣' };
+
+        // 初始讀取 JSON
+        async function loadDeck() {
+            try {
+                const response = await fetch('fishCard.json');
+                fullDeck = await response.json();
+            } catch (err) {
+                console.error("載入失敗", err);
+            }
+        }
+
+        function drawCard() {
+            if (fullDeck.length === 0) return;
+
+            // 1. 隨機取得索引
+            const randomIndex = Math.floor(Math.random() * fullDeck.length);
+            const fish = fullDeck[randomIndex];
+
+            // 2. 準備顯示內容
+            const cardScene = document.getElementById('card-scene');
+            const cardContent = document.getElementById('card-content');
+            const cardElement = document.getElementById('card-element');
+
+            const isRed = (fish.poker_data.suit === 'Hearts' || fish.poker_data.suit === 'Diamonds');
+            const symbol = suitSymbols[fish.poker_data.suit];
+
+            cardContent.innerHTML = `
+                <div class="element poker-info anchor-center ${isRed ? 'suit-red':'suit-black'}">${symbol}${fish.poker_data.rank}</div>
+                <div class="element category">${fish.category}</div>
+                <div class="element stars">${'★'.repeat(fish.difficulty)}</div>
+                <div class="element fish-illustration anchor-center">
+                    <img src="${fish.image}" style="max-width:100%; max-height:100%; object-fit:contain;">
+                </div>
+                <div class="element fish-name anchor-center">${fish.name}</div>
+                <div class="element condition anchor-center">${fish.capture_condition}</div>
+            `;
+
+            // 3. 顯示動畫
+            cardScene.style.visibility = 'visible';
+            cardElement.classList.remove('drawing');
+            void cardElement.offsetWidth; // 強制重繪觸發動畫
+            cardElement.classList.add('drawing');
+        }
+
+        loadDeck();
+    </script>
+</body>
+</html>
