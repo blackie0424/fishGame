@@ -671,6 +671,39 @@
       .collection-counter::before {
         content: "🐟";
       }
+
+      /* 刪除按鈕 */
+      .delete-btn {
+        position: absolute;
+        bottom: 120px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 12px 30px;
+        font-size: 18px;
+        font-weight: bold;
+        color: #fff;
+        background: linear-gradient(145deg, #e74c3c, #c0392b);
+        border: 3px solid #e74c3c;
+        border-radius: 25px;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+        transition: all 0.3s ease;
+        z-index: 110;
+        display: none;
+      }
+
+      .delete-btn:hover {
+        transform: translateX(-50%) scale(1.05);
+        box-shadow: 0 6px 20px rgba(231, 76, 60, 0.6);
+      }
+
+      .delete-btn:active {
+        transform: translateX(-50%) scale(0.95);
+      }
+
+      .delete-btn.visible {
+        display: block;
+      }
     </style>
   </head>
   <body>
@@ -730,6 +763,7 @@
         </div>
       </div>
       <button class="collect-btn" id="collect-btn">🐟 收集這張魚牌</button>
+      <button class="delete-btn" id="delete-btn">🗑️ 刪除這張魚牌</button>
       <div class="modal-hint">點擊任意處關閉</div>
     </div>
 
@@ -781,6 +815,7 @@
       // 收集的魚牌（記憶體儲存，重整即消失）
       let collectedFishes = [];
       let currentFish = null; // 目前顯示的魚牌
+      let currentViewIndex = -1; // 目前查看的收集區魚牌索引，-1 表示是新抽的牌
 
       // DOM 元素
       const fishDeckEl = document.getElementById("fish-deck");
@@ -792,6 +827,7 @@
       const cardContent = document.getElementById("card-content");
       const cardElement = document.getElementById("card-element");
       const collectBtn = document.getElementById("collect-btn");
+      const deleteBtn = document.getElementById("delete-btn");
       const collectionArea = document.getElementById("collection-area");
 
       /**
@@ -810,6 +846,7 @@
           fateDeckEl.addEventListener("click", drawFateCard);
           modalOverlay.addEventListener("click", handleModalClick);
           collectBtn.addEventListener("click", collectCurrentFish);
+          deleteBtn.addEventListener("click", deleteCurrentFish);
 
           // 初始化骰子
           const diceEl = document.getElementById("dice");
@@ -855,13 +892,15 @@
 
         const fish = getRandomItem(fishDeck);
         currentFish = fish; // 記錄當前魚牌
+        currentViewIndex = -1; // 新抽的牌
 
         // 設定為魚卡樣式
         cardContent.className = "card-face card-front";
         cardContent.innerHTML = renderFishCardContent(fish);
 
-        // 顯示收集按鈕
+        // 顯示收集按鈕，隱藏刪除按鈕
         collectBtn.classList.add("visible");
+        deleteBtn.classList.remove("visible");
 
         showModal();
       }
@@ -874,13 +913,15 @@
 
         const card = getRandomItem(fateDeck);
         currentFish = null; // 命運卡不能收集
+        currentViewIndex = -1;
 
         // 設定為命運卡樣式
         cardContent.className = "card-face card-front fate-card";
         cardContent.innerHTML = renderFateCardContent(card);
 
-        // 隱藏收集按鈕
+        // 隱藏收集和刪除按鈕
         collectBtn.classList.remove("visible");
+        deleteBtn.classList.remove("visible");
 
         showModal();
       }
@@ -903,8 +944,13 @@
        * 處理 Modal 點擊事件
        */
       function handleModalClick(e) {
-        // 如果點擊的是收集按鈕，不關閉 Modal
-        if (e.target === collectBtn || collectBtn.contains(e.target)) {
+        // 如果點擊的是收集按鈕或刪除按鈕，不關閉 Modal
+        if (
+          e.target === collectBtn ||
+          collectBtn.contains(e.target) ||
+          e.target === deleteBtn ||
+          deleteBtn.contains(e.target)
+        ) {
           return;
         }
         closeModal();
@@ -916,7 +962,9 @@
       function closeModal() {
         modalOverlay.classList.remove("active");
         collectBtn.classList.remove("visible");
+        deleteBtn.classList.remove("visible");
         currentFish = null;
+        currentViewIndex = -1;
       }
 
       /**
@@ -928,6 +976,7 @@
         if (!currentFish) return;
 
         // 將魚牌加入收集陣列
+        const newIndex = collectedFishes.length;
         collectedFishes.push({ ...currentFish });
 
         // 執行收集動畫
@@ -935,7 +984,7 @@
 
         // 動畫結束後加入收集區
         setTimeout(() => {
-          addCardToCollection(currentFish);
+          addCardToCollection(currentFish, newIndex);
           closeModal();
           modalCardContainer.classList.remove("collecting");
         }, 1000);
@@ -944,11 +993,12 @@
       /**
        * 將卡片加入收集區
        */
-      function addCardToCollection(fish) {
+      function addCardToCollection(fish, index) {
         // 建立縮圖元素
         const cardThumb = document.createElement("div");
         cardThumb.className = "collected-card bounce-in";
         cardThumb.title = `${fish.name} - ${fish.capture_condition}`;
+        cardThumb.dataset.index = index; // 記錄索引
 
         // 魚的圖片
         const img = document.createElement("img");
@@ -964,6 +1014,11 @@
         cardThumb.appendChild(img);
         cardThumb.appendChild(nameLabel);
 
+        // 點擊收集區魚牌放大顯示
+        cardThumb.addEventListener("click", () => {
+          viewCollectedCard(parseInt(cardThumb.dataset.index));
+        });
+
         // 加入收集區
         collectionArea.appendChild(cardThumb);
 
@@ -974,6 +1029,66 @@
         setTimeout(() => {
           cardThumb.classList.remove("bounce-in");
         }, 400);
+      }
+
+      /**
+       * 查看收集區的魚牌
+       */
+      function viewCollectedCard(index) {
+        const fish = collectedFishes[index];
+        if (!fish) return;
+
+        currentFish = fish;
+        currentViewIndex = index;
+
+        // 設定為魚卡樣式
+        cardContent.className = "card-face card-front";
+        cardContent.innerHTML = renderFishCardContent(fish);
+
+        // 顯示刪除按鈕，隱藏收集按鈕
+        collectBtn.classList.remove("visible");
+        deleteBtn.classList.add("visible");
+
+        showModal();
+      }
+
+      /**
+       * 刪除當前查看的魚牌
+       */
+      function deleteCurrentFish(e) {
+        e.stopPropagation();
+
+        if (currentViewIndex < 0 || currentViewIndex >= collectedFishes.length)
+          return;
+
+        // 從陣列中移除
+        collectedFishes.splice(currentViewIndex, 1);
+
+        // 重新渲染收集區
+        renderCollectionArea();
+
+        // 關閉 Modal
+        closeModal();
+      }
+
+      /**
+       * 重新渲染收集區
+       */
+      function renderCollectionArea() {
+        // 清空收集區（保留標題）
+        const title = collectionArea.querySelector(".collection-area-title");
+        collectionArea.innerHTML = "";
+        collectionArea.appendChild(title);
+
+        // 重新加入所有收集的魚牌
+        collectedFishes.forEach((fish, index) => {
+          addCardToCollection(fish, index);
+        });
+
+        // 更新收集區顯示狀態
+        if (collectedFishes.length === 0) {
+          collectionArea.classList.remove("has-cards");
+        }
       }
 
       // 啟動遊戲
