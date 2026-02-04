@@ -113,13 +113,12 @@
         }
       }
 
-      /* 骰子區域 - 置中 */
+      /* 骰子區域 - 左下角 */
       .dice-area {
         position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        z-index: 10;
+        bottom: 80px;
+        left: 80px;
+        z-index: 150;
         width: 150px;
         height: 150px;
         display: flex;
@@ -128,6 +127,12 @@
         justify-content: center;
         /* 建立獨立的層疊上下文，避免與其他元素干擾 */
         isolation: isolate;
+        /* 確保骰子區域可點擊 */
+        pointer-events: auto;
+        /* 背景讓骰子更明顯 */
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 15px;
+        border: 2px solid rgba(212, 165, 116, 0.5);
       }
 
       .dice-area .dice-scene {
@@ -1380,12 +1385,16 @@
        * 處理 Modal 點擊事件
        */
       function handleModalClick(e) {
-        // 如果點擊的是收集按鈕或刪除按鈕，不關閉 Modal
+        // 取得骰子區域元素
+        const diceArea = document.querySelector(".dice-area");
+
+        // 如果點擊的是收集按鈕、刪除按鈕或骰子區域，不關閉 Modal
         if (
           e.target === collectBtn ||
           collectBtn.contains(e.target) ||
           e.target === deleteBtn ||
-          deleteBtn.contains(e.target)
+          deleteBtn.contains(e.target) ||
+          (diceArea && diceArea.contains(e.target))
         ) {
           return;
         }
