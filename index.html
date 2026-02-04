@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tao Fish Game - 達悟魚遊戲</title>
+    <link rel="stylesheet" href="css/main.css" />
+    <style>
+      .nav-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 25px;
+        width: 100%;
+        max-width: 900px;
+        padding: 20px;
+      }
+
+      .nav-card {
+        background: var(--color-bg-blue);
+        border-radius: var(--radius-md);
+        padding: 30px;
+        text-align: center;
+        transition: var(--transition-btn);
+        cursor: pointer;
+        text-decoration: none;
+        color: var(--color-text-light);
+        border: 2px solid transparent;
+      }
+
+      .nav-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--color-primary);
+        text-decoration: none;
+      }
+
+      .nav-card .icon {
+        font-size: 60px;
+        margin-bottom: 15px;
+      }
+
+      .nav-card h2 {
+        margin: 0 0 10px;
+        font-size: 24px;
+      }
+
+      .nav-card p {
+        margin: 0;
+        font-size: 14px;
+        opacity: 0.8;
+      }
+
+      .nav-card.fish {
+        border-top: 4px solid var(--color-primary);
+      }
+      .nav-card.fate {
+        border-top: 4px solid var(--color-secondary);
+      }
+      .nav-card.dice {
+        border-top: 4px solid var(--color-danger);
+      }
+      .nav-card.debug {
+        border-top: 4px solid #9b59b6;
+      }
+    </style>
+  </head>
+  <body class="layout-center">
+    <h1 style="margin-bottom: 40px">🎮 Tao Fish Game</h1>
+
+    <nav class="nav-grid">
+      <a href="html/list.html" class="nav-card fish">
+        <div class="icon">🐟</div>
+        <h2>魚卡圖鑑</h2>
+        <p>瀏覽所有魚卡，點擊可翻轉查看背面</p>
+      </a>
+
+      <a href="html/fishRandom.html" class="nav-card fish">
+        <div class="icon">🎣</div>
+        <h2>隨機抽魚</h2>
+        <p>模擬拋竿抽魚的遊戲體驗</p>
+      </a>
+
+      <a href="html/destiny.html" class="nav-card fate">
+        <div class="icon">🔮</div>
+        <h2>命運牌庫</h2>
+        <p>瀏覽所有命運卡內容</p>
+      </a>
+
+      <a href="html/destinyRandom.html" class="nav-card fate">
+        <div class="icon">✨</div>
+        <h2>抽命運卡</h2>
+        <p>隨機抽取一張命運卡</p>
+      </a>
+
+      <a href="html/dice.html" class="nav-card dice">
+        <div class="icon">🎲</div>
+        <h2>擲骰子</h2>
+        <p>3D 骰子動畫效果</p>
+      </a>
+
+      <a href="html/oneCard.html" class="nav-card debug">
+        <div class="icon">🔧</div>
+        <h2>除錯工具</h2>
+        <p>單張卡片座標偵測工具</p>
+      </a>
+    </nav>
+  </body>
+</html>

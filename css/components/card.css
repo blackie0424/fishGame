@@ -1,0 +1,110 @@
+/**
+ * 卡片翻轉元件樣式
+ */
+
+/* 3D 場景容器 */
+.scene {
+  width: calc(var(--card-w) * var(--render-scale));
+  height: calc(var(--card-h) * var(--render-scale));
+  perspective: 2000px;
+}
+
+/* 卡片縮放包裝器 */
+.card-wrapper {
+  width: var(--card-w);
+  height: var(--card-h);
+  transform: scale(var(--render-scale));
+  transform-origin: top left;
+}
+
+/* 卡片本體 */
+.card {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transition: var(--transition-flip);
+  transform-style: preserve-3d;
+  cursor: pointer;
+}
+
+/* 翻轉狀態 */
+.card.is-flipped {
+  transform: rotateY(180deg);
+}
+
+/* 卡片正反面通用 */
+.card-face {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  border-radius: var(--radius-card);
+  border: 4px solid var(--color-border);
+  box-shadow: var(--shadow-card);
+}
+
+/* 卡片正面 - 魚卡 */
+.card-front {
+  background-color: #fff;
+  background-image: url("../images/template_v1.png");
+  background-size: 100% 100%;
+  color: var(--color-text-dark);
+}
+
+/* 卡片背面 */
+.card-back {
+  background-image: url("../images/template_back_v1.png");
+  background-size: 100% 100%;
+  transform: rotateY(180deg);
+}
+
+/* 命運卡正面 (無背景圖) */
+.card-front.fate-card {
+  background: #ffffff;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 60px;
+}
+
+/* 抽卡動畫 */
+.card.drawing {
+  animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(100px) rotateX(-20deg);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) rotateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes cardPop {
+  0% {
+    transform: translateY(200px) scale(0.8) rotateX(-30deg);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0) scale(1) rotateX(0);
+    opacity: 1;
+  }
+}
+
+/* 卡片網格佈局 */
+.deck-grid {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fill,
+    calc(var(--card-w) * var(--render-scale))
+  );
+  gap: 20px;
+  justify-content: center;
+  width: 100%;
+  max-width: 1400px;
+}

@@ -1,0 +1,34 @@
+/**
+ * 命運卡內容元素樣式
+ */
+
+.fate-title {
+  font-size: 85px;
+  font-weight: 900;
+  color: var(--color-secondary);
+  border-bottom: 5px solid var(--color-accent);
+  padding-bottom: 20px;
+  margin-top: 40px;
+}
+
+.fate-content {
+  font-size: 55px;
+  line-height: 1.4;
+  color: var(--color-border);
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 0;
+}
+
+.fate-result {
+  font-size: 45px;
+  font-weight: bold;
+  background: #fdf2e9;
+  padding: 30px;
+  border-radius: var(--radius-md);
+  color: var(--color-danger);
+  margin-bottom: 40px;
+  border: 2px dashed var(--color-secondary);
+}

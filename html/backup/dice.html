@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D 丟骰子</title>
+    <style>
+        /* --- 頁面基礎設定 --- */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #2c3e50; /* 深色背景突顯骰子 */
+            font-family: sans-serif;
+            flex-direction: column;
+            margin: 0;
+        }
+
+        /* --- 3D 場景容器 --- */
+        /* 這是實現 3D 效果的關鍵，perspective 定義了觀察者與 Z=0 平面的距離 */
+        .scene {
+            width: 100px;
+            height: 100px;
+            margin: 50px;
+            perspective: 600px;
+        }
+
+        /* --- 骰子本體 --- */
+        .cube {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d; /* 確保子元素保留其 3D 位置 */
+            /* 初始角度，稍微傾斜一點看起來比較立體 */
+            transform: rotateX(-30deg) rotateY(-30deg);
+            /* 設置轉場動畫，ease-out 讓結束時速度變慢，更真實 */
+            transition: transform 1.5s ease-out;
+        }
+
+        /* --- 骰子的六個面 (通用樣式) --- */
+        .cube__face {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            background: #ecf0f1; /* 白色底 */
+            border: 2px solid #bdc3c7; /* 灰色邊框 */
+            line-height: 100px;
+            font-size: 40px;
+            font-weight: bold;
+            color: #c0392b; /* 紅色數字 */
+            text-align: center;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.1); /* 內部陰影增加質感 */
+            backface-visibility: hidden; /* 隱藏背面，雖然在這個例子中不嚴格需要，但在複雜動畫中是好習慣 */
+        }
+
+        /* --- 定位六個面 --- */
+        /* 假設骰子中心在 (0,0,0)，每個面距離中心 50px (寬度的一半) */
+        /* 標準骰子：相對面之和為 7 */
+
+        .cube__face--1 { transform: rotateY(  0deg) translateZ(50px); } /* 前 */
+        .cube__face--6 { transform: rotateY(180deg) translateZ(50px); } /* 後 */
+
+        .cube__face--2 { transform: rotateY( 90deg) translateZ(50px); } /* 右 */
+        .cube__face--5 { transform: rotateY(-90deg) translateZ(50px); } /* 左 */
+
+        .cube__face--4 { transform: rotateX( 90deg) translateZ(50px); } /* 上 */
+        .cube__face--3 { transform: rotateX(-90deg) translateZ(50px); } /* 下 */
+
+
+        /* --- 按鈕與結果樣式 --- */
+        .controls {
+            margin-top: 50px;
+            text-align: center;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 18px;
+            cursor: pointer;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            box-shadow: 0 4px #c0392b;
+            transition: all 0.1s;
+        }
+
+        button:active {
+            box-shadow: 0 2px #c0392b;
+            transform: translateY(2px);
+        }
+
+        button:disabled {
+            background-color: #95a5a6;
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #result-text {
+            margin-top: 20px;
+            color: white;
+            font-size: 24px;
+            min-height: 30px; /* 佔位防止跳動 */
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="scene">
+        <div class="cube" id="diceBtn">
+            <div class="cube__face cube__face--1">1</div>
+            <div class="cube__face cube__face--2">2</div>
+            <div class="cube__face cube__face--3">3</div>
+            <div class="cube__face cube__face--4">4</div>
+            <div class="cube__face cube__face--5">5</div>
+            <div class="cube__face cube__face--6">6</div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button id="rollBtn">擲骰子!</button>
+        <div id="result-text">準備開始...</div>
+    </div>
+
+
+    <script>
+        const dice = document.getElementById('diceBtn');
+        const rollBtn = document.getElementById('rollBtn');
+        const resultText = document.getElementById('result-text');
+
+        // 我們需要記錄當前的旋轉角度，以便下一次旋轉時可以累積上去，
+        // 這樣動畫看起來才是連續的，不會跳回原點。
+        let currentRotX = -30;
+        let currentRotY = -30;
+
+        rollBtn.addEventListener('click', rollDice);
+
+        function rollDice() {
+            // 1. 產生 1 到 6 的隨機數
+            const result = Math.floor(Math.random() * 6) + 1;
+
+            // 2. 鎖定按鈕，防止動畫中重複點擊
+            rollBtn.disabled = true;
+            resultText.textContent = "骰子滾動中...";
+
+            // 3. 計算為了顯示該數字，骰子需要旋轉到的目標基礎角度
+            // 這裡的角度對應於 CSS 中定義的每個面的反向旋轉
+            let targetRotX = 0;
+            let targetRotY = 0;
+
+            switch(result) {
+                case 1: targetRotX = 0; targetRotY = 0; break; // 顯示正面
+                case 6: targetRotX = 0; targetRotY = 180; break; // 顯示背面
+                case 2: targetRotX = 0; targetRotY = -90; break; // 顯示右面
+                case 5: targetRotX = 0; targetRotY = 90; break;  // 顯示左面
+                case 4: targetRotX = -90; targetRotY = 0; break; // 顯示上面
+                case 3: targetRotX = 90; targetRotY = 0; break;  // 顯示下面
+            }
+
+            // 4. 增加額外的旋轉圈數 (3 到 5 圈)，製造「滾動」的效果
+            // 隨機決定 X 軸和 Y 軸要多轉幾圈 (每圈 360 度)
+            const extraSpinsX = (Math.floor(Math.random() * 3) + 3) * 360;
+            const extraSpinsY = (Math.floor(Math.random() * 3) + 3) * 360;
+
+            // 5. 更新全局的旋轉角度變量
+            // 新角度 = 當前角度 + 目標基礎角度的差值 + 額外旋轉圈數
+            // 使用差值計算是為了確保無論當前角度在哪，都能準確轉到目標面
+            currentRotX += (targetRotX - (currentRotX % 360)) + extraSpinsX;
+            currentRotY += (targetRotY - (currentRotY % 360)) + extraSpinsY;
+
+            // 6. 應用 CSS 變換，觸發 transition 動畫
+            dice.style.transform = `rotateX(${currentRotX}deg) rotateY(${currentRotY}deg)`;
+
+            // 7. 監聽動畫結束事件 (transitionend)，恢復按鈕並顯示結果
+            // 注意：這裡使用 'once: true' 確保事件監聽器只執行一次
+            dice.addEventListener('transitionend', () => {
+                rollBtn.disabled = false;
+                resultText.textContent = `結果是: ${result} 點!`;
+            }, { once: true });
+        }
+    </script>
+</body>
+</html>

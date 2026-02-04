@@ -1,0 +1,63 @@
+/**
+ * 基礎樣式 - Reset 與通用設定
+ */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--color-bg-dark);
+  color: var(--color-text-light);
+  font-family: var(--font-main);
+  line-height: 1.6;
+}
+
+/* 置中佈局 */
+body.layout-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+/* 有 padding 的佈局 */
+body.layout-padded {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px;
+}
+
+/* 連結樣式 */
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* 標題樣式 */
+h1 {
+  color: var(--color-primary);
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+/* 錯誤訊息 */
+.error-message {
+  color: var(--color-danger-light);
+  padding: 20px;
+  text-align: center;
+}

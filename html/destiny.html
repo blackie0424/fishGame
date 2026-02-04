@@ -1,156 +1,42 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <title>Fate Cards - External JSON Loader</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>命運牌卡庫</title>
+    <link rel="stylesheet" href="../css/main.css" />
     <style>
-        :root {
-            --card-w: 825px;
-            --card-h: 1125px;
-            --render-scale: 0.25; 
-        }
-
-        * { box-sizing: border-box; }
-        body { 
-            background: #2c3e50; 
-            color: #ecf0f1; 
-            font-family: 'Noto Sans TC', sans-serif; 
-            padding: 40px; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-        }
-
-        .deck-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, calc(var(--card-w) * var(--render-scale)));
-            gap: 25px;
-            justify-content: center;
-            width: 100%;
-        }
-
-        .scene {
-            width: calc(var(--card-w) * var(--render-scale));
-            height: calc(var(--card-h) * var(--render-scale));
-            perspective: 2000px;
-        }
-
-        .card-wrapper {
-            width: var(--card-w);
-            height: var(--card-h);
-            transform: scale(var(--render-scale));
-            transform-origin: top left;
-        }
-
-        .card {
-            width: 100%;
-            height: 100%;
-            position: relative;
-            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-            transform-style: preserve-3d;
-            cursor: pointer;
-        }
-
-        .card.is-flipped { transform: rotateY(180deg); }
-
-        .card-face {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            backface-visibility: hidden;
-            border-radius: 50px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
-            display: flex;
-            flex-direction: column;
-            padding: 60px;
-            border: 8px solid #34495e;
-        }
-
-        /* 正面樣式 */
-        .card-front {
-            background: #ffffff;
-            color: #2c3e50;
-            text-align: center;
-            justify-content: space-between;
-        }
-
-        /* 背面樣式 */
-        .card-back {
-            background-image: url('template_back_v1.png');
-            background-size: 100% 100%;
-            transform: rotateY(180deg);
-        }
-
-        .fate-title {
-            font-size: 85px;
-            font-weight: 900;
-            color: #e67e22;
-            border-bottom: 5px solid #f39c12;
-            padding-bottom: 20px;
-            margin-top: 40px;
-        }
-
-        .fate-content {
-            font-size: 55px;
-            line-height: 1.4;
-            color: #34495e;
-            flex-grow: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 40px 0;
-        }
-
-        .fate-result {
-            font-size: 45px;
-            font-weight: bold;
-            background: #fdf2e9;
-            padding: 30px;
-            border-radius: 25px;
-            color: #c0392b;
-            margin-bottom: 40px;
-            border: 2px dashed #e67e22;
-        }
+      :root {
+        --render-scale: 0.25;
+      }
+      body {
+        background: var(--color-bg-blue);
+      }
     </style>
-</head>
-<body>
-
-    <h1 style="margin-bottom: 40px;">命運牌卡庫 (載入自 destiny.json)</h1>
+  </head>
+  <body class="layout-padded">
+    <h1 style="color: var(--color-secondary)">🔮 命運牌卡庫</h1>
     <div class="deck-grid" id="fate-deck"></div>
 
-    <script>
-        async function loadDestiny() {
-            try {
-                // 1. 從外部檔案讀取 JSON
-                const response = await fetch('destiny.json');
-                const destinyCards = await response.json();
+    <script type="module">
+      import { loadDestinyCards } from "../js/data-loader.js";
+      import { renderFlippableFateCard } from "../js/card-renderer.js";
+      import { showError } from "../js/utils.js";
 
-                const deckContainer = document.getElementById('fate-deck');
-                
-                // 2. 渲染每一張卡片
-                destinyCards.forEach(data => {
-                    const cardEl = document.createElement('div');
-                    cardEl.className = 'scene';
-                    cardEl.innerHTML = `
-                        <div class="card-wrapper">
-                            <div class="card" onclick="this.classList.toggle('is-flipped')">
-                                <div class="card-face card-front">
-                                    <div class="fate-title">${data.title}</div>
-                                    <div class="fate-content">${data.content}</div>
-                                    <div class="fate-result">結果：<br>${data.result}</div>
-                                </div>
-                                <div class="card-face card-back"></div>
-                            </div>
-                        </div>`;
-                    deckContainer.appendChild(cardEl);
-                });
-            } catch (err) {
-                console.error("無法載入 destiny.json", err);
-                document.body.innerHTML += `<p style="color:red">錯誤：無法讀取 destiny.json，請確認是否已啟動伺服器環境（如 Live Server）。</p>`;
-            }
+      async function init() {
+        try {
+          const destinyCards = await loadDestinyCards();
+          const deckContainer = document.getElementById("fate-deck");
+
+          deckContainer.innerHTML = destinyCards
+            .map((data) => renderFlippableFateCard(data))
+            .join("");
+        } catch (err) {
+          showError("無法載入命運卡資料，請確認是否已啟動伺服器環境");
         }
+      }
 
-        loadDestiny();
+      init();
     </script>
-</body>
+  </body>
 </html>

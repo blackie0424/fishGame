@@ -1,0 +1,19 @@
+/**
+ * 主要樣式入口 - 載入所有模組
+ * 
+ * 使用方式：在 HTML 中只需引入此檔案
+ * <link rel="stylesheet" href="../css/main.css">
+ */
+
+/* 變數定義 */
+@import "./variables.css";
+
+/* 基礎樣式 */
+@import "./base.css";
+
+/* 元件樣式 */
+@import "./components/button.css";
+@import "./components/card.css";
+@import "./components/fish-card.css";
+@import "./components/fate-card.css";
+@import "./components/dice.css";

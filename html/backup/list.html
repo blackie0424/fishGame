@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>Tao Fish Card - JSON Loader</title>
+    <style>
+        :root {
+            --card-w: 825px;
+            --card-h: 1125px;
+            --render-scale: 0.22; 
+        }
+
+        * { box-sizing: border-box; }
+        body { background: #1a1a1a; color: #ecf0f1; font-family: 'JetBrains Mono', sans-serif; padding: 40px; display: flex; flex-direction: column; align-items: center; }
+        
+        .deck-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, calc(var(--card-w) * var(--render-scale)));
+            gap: 20px;
+            justify-content: center;
+            width: 100%;
+            max-width: 1400px;
+        }
+
+        .scene {
+            width: calc(var(--card-w) * var(--render-scale));
+            height: calc(var(--card-h) * var(--render-scale));
+            perspective: 2000px;
+            margin-bottom: 20px;
+        }
+
+        .card-wrapper {
+            width: var(--card-w);
+            height: var(--card-h);
+            transform: scale(var(--render-scale));
+            transform-origin: top left;
+        }
+
+        .card { width: 100%; height: 100%; position: relative; transition: transform 0.6s; transform-style: preserve-3d; cursor: pointer; }
+        .card.is-flipped { transform: rotateY(180deg); }
+
+        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 40px; border: 4px solid #34495e; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .card-front { background-color: #fff; background-image: url('template_v1.png'); background-size: 100% 100%; color: #2f3542; }
+        .card-back { background-image: url('template_back_v1.png'); background-size: 100% 100%; transform: rotateY(180deg); }
+
+        .element { position: absolute; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+        .anchor-center { transform: translate(-50%, -50%); }
+        .poker-info { left: 110px; top: 110px; width: 120px; font-size: 70px; font-weight: bold; }
+        .category { left: 720px; top: 80px; font-size: 45px; font-weight: bold; transform: translateX(-100%); }
+        .stars { left: 720px; top: 130px; color: #f1c40f; font-size: 35px; transform: translateX(-100%); }
+        .fish-illustration { left: 412px; top: 480px; width: 650px; height: 500px; }
+        .fish-name { left: 412px; top: 800px; width: 600px; font-size: 75px; font-weight: bold; }
+        .condition { left: 412px; top: 970px; width: 700px; font-size: 45px; text-align: center; font-weight: 600; }
+
+        .suit-red { color: #e84118; }
+        .suit-black { color: #2f3542; }
+    </style>
+</head>
+<body>
+
+    <h1 style="color: #2ecc71;">Tao Fish Card Deck (來自 fishCard.json)</h1>
+    <div class="deck-grid" id="deck"></div>
+
+    <script>
+    // 1. 定義新的權重順序：A(1) < 2 < 3 ... < 10 < J(11) < Q(12) < K(13)
+    const rankWeights = { 
+        "A": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, 
+        "7": 7, "8": 8, "9": 9, "10": 10, "J": 11, "Q": 12, "K": 13 
+    };
+
+    // 花色順序：黑桃(4) > 紅心(3) > 方塊(2) > 梅花(1) (同一數字時的排列)
+    const suitWeights = { "Spades": 4, "Hearts": 3, "Diamonds": 2, "Clubs": 1 };
+    const suitSymbols = { 'Spades': '♠', 'Hearts': '♥', 'Diamonds': '♦', 'Clubs': '♣' };
+
+    async function init() {
+        try {
+            const response = await fetch('./fishCard.json');
+            const data = await response.json();
+
+            // 2. 執行排序邏輯：改為由小到大排列 (a - b)
+            data.sort((a, b) => {
+                const rankA = rankWeights[a.poker_data.rank];
+                const rankB = rankWeights[b.poker_data.rank];
+
+                if (rankA !== rankB) {
+                    return rankA - rankB; // 點數小的排在前面 (A 最小)
+                }
+                // 若點數相同，則按花色權重由大到小排 (黑桃 > 紅心 > 方塊 > 梅花)
+                return suitWeights[b.poker_data.suit] - suitWeights[a.poker_data.suit];
+            });
+
+            // 3. 渲染卡牌
+            const deckContainer = document.getElementById('deck');
+            deckContainer.innerHTML = ''; // 清空現有內容
+
+            data.forEach(fish => {
+                const symbol = suitSymbols[fish.poker_data.suit];
+                const isRed = (fish.poker_data.suit === 'Hearts' || fish.poker_data.suit === 'Diamonds');
+                
+                const cardEl = document.createElement('div');
+                cardEl.className = 'scene';
+                cardEl.innerHTML = `
+                    <div class="card-wrapper">
+                        <div class="card" onclick="this.classList.toggle('is-flipped')">
+                            <div class="card-face card-front">
+                                <div class="element poker-info anchor-center ${isRed ? 'suit-red':'suit-black'}">${symbol}${fish.poker_data.rank}</div>
+                                <div class="element category">${fish.category}</div>
+                                <div class="element stars">${'★'.repeat(fish.difficulty)}</div>
+                                <div class="element fish-illustration anchor-center">
+                                    <img src="${fish.image}" style="max-width:100%; max-height:100%; object-fit:contain;">
+                                </div>
+                                <div class="element fish-name anchor-center">${fish.name}</div>
+                                <div class="element condition anchor-center">${fish.capture_condition}</div>
+                            </div>
+                            <div class="card-face card-back"></div>
+                        </div>
+                    </div>`;
+                deckContainer.appendChild(cardEl);
+            });
+        } catch (err) {
+            console.error("無法載入資料", err);
+        }
+    }
+
+    init();
+    </script>
+</body>
+</html>

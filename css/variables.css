@@ -1,0 +1,50 @@
+/**
+ * CSS 變數定義 - 全域共用的設計令牌
+ */
+
+:root {
+  /* 卡片尺寸 */
+  --card-w: 825px;
+  --card-h: 1125px;
+  --render-scale: 0.3;
+
+  /* 色彩系統 */
+  --color-bg-dark: #1a1a1a;
+  --color-bg-blue: #2c3e50;
+  --color-text-light: #ecf0f1;
+  --color-text-dark: #2f3542;
+
+  --color-primary: #2ecc71;
+  --color-primary-dark: #27ae60;
+  --color-secondary: #e67e22;
+  --color-secondary-dark: #d35400;
+  --color-accent: #f39c12;
+  --color-danger: #c0392b;
+  --color-danger-light: #e84118;
+
+  --color-border: #34495e;
+  --color-star: #f1c40f;
+
+  /* 撲克牌花色 */
+  --color-suit-red: #e84118;
+  --color-suit-black: #2f3542;
+
+  /* 陰影 */
+  --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.5);
+  --shadow-btn: 0 4px 15px rgba(46, 204, 113, 0.4);
+  --shadow-btn-orange: 0 6px 20px rgba(230, 126, 34, 0.4);
+
+  /* 字體 */
+  --font-main: "Noto Sans TC", "JetBrains Mono", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  /* 圓角 */
+  --radius-card: 40px;
+  --radius-btn: 50px;
+  --radius-sm: 8px;
+  --radius-md: 25px;
+
+  /* 動畫 */
+  --transition-flip: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-btn: all 0.2s ease;
+}

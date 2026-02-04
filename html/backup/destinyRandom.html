@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>Fate Draw - Tao Fish Game</title>
+    <style>
+        :root {
+            --card-w: 825px;
+            --card-h: 1125px;
+            --render-scale: 0.45; 
+        }
+
+        * { box-sizing: border-box; }
+        body { 
+            background: #2c3e50; 
+            color: #ecf0f1; 
+            font-family: 'Noto Sans TC', sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .draw-btn {
+            padding: 18px 50px;
+            font-size: 26px;
+            font-weight: bold;
+            background: #e67e22;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(230, 126, 34, 0.4);
+            transition: all 0.2s;
+            margin-bottom: 50px;
+            z-index: 100;
+        }
+
+        .draw-btn:hover { background: #d35400; transform: scale(1.05); }
+        .draw-btn:active { transform: scale(0.95); }
+
+        /* 卡牌展示區 */
+        .scene {
+            width: calc(var(--card-w) * var(--render-scale));
+            height: calc(var(--card-h) * var(--render-scale));
+            perspective: 2000px;
+            visibility: hidden;
+        }
+
+        .card-wrapper {
+            width: var(--card-w);
+            height: var(--card-h);
+            transform: scale(var(--render-scale));
+            transform-origin: top left;
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-style: preserve-3d;
+        }
+
+        /* 抽牌動畫 */
+        .drawing { animation: cardPop 0.6s ease-out forwards; }
+        @keyframes cardPop {
+            0% { transform: translateY(200px) scale(0.8) rotateX(-30deg); opacity: 0; }
+            100% { transform: translateY(0) scale(1) rotateX(0); opacity: 1; }
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 50px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            border: 10px solid #34495e;
+            display: flex;
+            flex-direction: column;
+            padding: 60px;
+        }
+
+        /* 正面：白底黑字 */
+        .card-front {
+            background: #ffffff;
+            color: #2c3e50;
+            text-align: center;
+            justify-content: space-between;
+        }
+
+        /* 背面：指定模版 */
+        .card-back {
+            background-image: url('template_back_v1.png');
+            background-size: 100% 100%;
+            /* 預設顯示背面，抽中後再翻轉或直接顯示正面 */
+        }
+
+        /* 內部內容 */
+        .fate-title { font-size: 85px; font-weight: 900; color: #e67e22; border-bottom: 6px solid #f39c12; padding-bottom: 20px; }
+        .fate-content { font-size: 55px; line-height: 1.4; flex-grow: 1; display: flex; align-items: center; justify-content: center; }
+        .fate-result { font-size: 48px; font-weight: bold; background: #fdf2e9; padding: 35px; border-radius: 30px; color: #c0392b; border: 3px dashed #e67e22; }
+
+    </style>
+</head>
+<body>
+
+    <button class="draw-btn" onclick="drawFate()">🔮 抽取命運卡</button>
+
+    <div class="scene" id="fate-scene">
+        <div class="card-wrapper">
+            <div class="card" id="fate-card">
+                <div class="card-face card-front" id="fate-data">
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let deck = [];
+
+        // 載入 JSON 資料
+        async function init() {
+            try {
+                const response = await fetch('destiny.json');
+                deck = await response.json();
+            } catch (err) {
+                console.error("無法讀取 destiny.json", err);
+            }
+        }
+
+        function drawFate() {
+            if (deck.length === 0) return;
+
+            // 1. 隨機選取
+            const card = deck[Math.floor(Math.random() * deck.length)];
+            
+            // 2. 注入內容
+            const container = document.getElementById('fate-data');
+            container.innerHTML = `
+                <div class="fate-title">${card.title}</div>
+                <div class="fate-content">${card.content}</div>
+                <div class="fate-result">結果：<br>${card.result}</div>
+            `;
+
+            // 3. 觸發動畫效果
+            const scene = document.getElementById('fate-scene');
+            const cardEl = document.getElementById('fate-card');
+            
+            scene.style.visibility = 'visible';
+            cardEl.classList.remove('drawing');
+            void cardEl.offsetWidth; // 強制重繪觸發動畫
+            cardEl.classList.add('drawing');
+        }
+
+        init();
+    </script>
+</body>
+</html>

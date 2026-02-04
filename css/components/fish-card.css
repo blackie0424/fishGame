@@ -1,0 +1,90 @@
+/**
+ * 魚卡內容元素樣式
+ */
+
+/* 通用元素定位 */
+.element {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+/* 錨點類型 */
+.anchor-center {
+  transform: translate(-50%, -50%);
+}
+
+.anchor-top-right {
+  transform: translateX(-100%);
+}
+
+/* 撲克資訊 (左上角花色+數字) */
+.poker-info {
+  left: 110px;
+  top: 110px;
+  width: 120px;
+  font-size: 70px;
+  font-weight: bold;
+}
+
+/* 分類標籤 (右上角) */
+.category {
+  left: 720px;
+  top: 80px;
+  font-size: 45px;
+  font-weight: bold;
+  transform: translateX(-100%);
+}
+
+/* 難度星星 */
+.stars {
+  left: 720px;
+  top: 130px;
+  color: var(--color-star);
+  font-size: 35px;
+  transform: translateX(-100%);
+}
+
+/* 魚的插圖 */
+.fish-illustration {
+  left: 412px;
+  top: 480px;
+  width: 650px;
+  height: 500px;
+}
+
+.fish-illustration img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* 魚名稱 */
+.fish-name {
+  left: 412px;
+  top: 800px;
+  width: 600px;
+  font-size: 75px;
+  font-weight: bold;
+}
+
+/* 捕獲條件 */
+.condition {
+  left: 412px;
+  top: 970px;
+  width: 700px;
+  font-size: 45px;
+  text-align: center;
+  font-weight: 600;
+}
+
+/* 花色顏色 */
+.suit-red {
+  color: var(--color-suit-red);
+}
+
+.suit-black {
+  color: var(--color-suit-black);
+}

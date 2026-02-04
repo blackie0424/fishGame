@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>Tao Fish Card - Center Flip Debugger</title>
+    <style>
+        :root {
+            --card-w: 825px;
+            --card-h: 1125px;
+            --scale: 0.5; 
+        }
+
+        * { box-sizing: border-box; }
+
+        body { 
+            background: #1a1a1a; 
+            color: #ecf0f1; 
+            font-family: 'JetBrains Mono', monospace; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            padding: 20px;
+        }
+
+        .info-panel {
+            background: #2c3e50;
+            padding: 15px 30px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 100;
+        }
+
+        /* 1. 場景層：負責縮放與透視 */
+        .scene {
+            width: var(--card-w);
+            height: var(--card-h);
+            perspective: 2000px;
+            transform: scale(var(--scale)); /* 在這裡縮放，不會影響旋轉中心 */
+            transform-origin: top center;
+        }
+
+        /* 2. 牌卡層：負責原地旋轉 */
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+            cursor: pointer;
+            /* 預設 transform-origin 就是 center，這能確保原地翻轉 */
+        }
+
+        .card.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .card-front {
+            background-image: url('template_v1.png');
+            background-size: 100% 100%;
+        }
+
+        .card-back {
+            background-image: url('template_back_v1.png');
+            background-size: 100% 100%;
+            transform: rotateY(180deg);
+        }
+
+        /* 資料元素 */
+        .element {
+            position: absolute;
+            border: 1px dashed rgba(255, 71, 87, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            color: #2f3542;
+        }
+
+        .anchor-center { transform: translate(-50%, -50%); }
+        .anchor-top-right { transform: translateX(-100%); }
+
+        /* 座標定義 */
+        #poker-info { left: 100px; top: 100px; width: 100px; font-size: 80px; }
+        #category { left: 700px; top: 70px; font-size: 45px; }
+        #stars { left: 700px; top: 120px; color: #f1c40f; font-size: 30px; }
+        #fish-illustration { left: 412px; top: 480px; width: 600px; height: 450px; }
+        #fish-name { left: 412px; top: 820px; width: 600px; font-size: 60px; font-weight: bold; }
+        #condition { left: 412px; top: 950px; width: 700px; font-size: 35px; text-align: center; line-height: 1.4; }
+
+    </style>
+</head>
+<body>
+
+    <div class="info-panel">
+        當前座標 (X, Y): <strong id="coords" style="color: #2ecc71;">0, 0</strong>
+    </div>
+    
+    <div class="scene">
+        <div class="card" id="card">
+            <div class="card-face card-front" id="front-face">
+                <div id="poker-info" class="element anchor-center"></div>
+                <div id="category" class="element anchor-top-right"></div>
+                <div id="stars" class="element anchor-top-right"></div>
+                <div id="fish-illustration" class="element anchor-center">
+                    <img id="fish-img" src="" style="max-width:100%; max-height:100%; object-fit:contain;">
+                </div>
+                <div id="fish-name" class="element anchor-center"></div>
+                <div id="condition" class="element anchor-center"></div>
+            </div>
+            <div class="card-face card-back"></div>
+        </div>
+    </div>
+
+    <script>
+        const cardData = {
+            "poker": "♠7",
+            "category": "OYOD",
+            "stars": 5,
+            "image": "ilek.jpg",
+            "name": "Ilek",
+            "condition": "捕獲條件:<br>骰子 > 五點"
+        };
+
+        function renderCard(data) {
+            document.getElementById('poker-info').textContent = data.poker;
+            document.getElementById('category').textContent = data.category;
+            document.getElementById('stars').textContent = '★'.repeat(data.stars);
+            document.getElementById('fish-img').src = data.image;
+            document.getElementById('fish-name').textContent = data.name;
+            document.getElementById('condition').innerHTML = data.condition;
+        }
+
+        renderCard(cardData);
+
+        const card = document.getElementById('card');
+        const frontFace = document.getElementById('front-face');
+        const coordsDisplay = document.getElementById('coords');
+
+        // 點擊翻轉
+        card.addEventListener('click', () => {
+            card.classList.toggle('is-flipped');
+        });
+
+        // 精確座標偵測
+        frontFace.addEventListener('mousemove', (e) => {
+            const rect = frontFace.getBoundingClientRect();
+            // 由於 scale 是在 scene 上，getBoundingClientRect 會取得縮放後的解析度
+            // 我們需要反推回 825x1125 的原始像素
+            const scale = rect.width / 825; 
+            const x = Math.round((e.clientX - rect.left) / scale);
+            const y = Math.round((e.clientY - rect.top) / scale);
+            coordsDisplay.innerText = `${x}, ${y}`;
+        });
+    </script>
+</body>
+</html>

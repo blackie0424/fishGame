@@ -1,0 +1,70 @@
+/**
+ * 骰子元件樣式
+ */
+
+/* 3D 場景容器 */
+.dice-scene {
+  width: 100px;
+  height: 100px;
+  margin: 50px;
+  perspective: 600px;
+}
+
+/* 骰子本體 */
+.cube {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transform: rotateX(-30deg) rotateY(-30deg);
+  transition: transform 1.5s ease-out;
+}
+
+/* 骰子的六個面 */
+.cube__face {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  background: #ecf0f1;
+  border: 2px solid #bdc3c7;
+  line-height: 100px;
+  font-size: 40px;
+  font-weight: bold;
+  color: var(--color-danger);
+  text-align: center;
+  box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.1);
+  backface-visibility: hidden;
+}
+
+/* 定位六個面 - 標準骰子相對面之和為 7 */
+.cube__face--1 {
+  transform: rotateY(0deg) translateZ(50px);
+} /* 前 */
+.cube__face--6 {
+  transform: rotateY(180deg) translateZ(50px);
+} /* 後 */
+.cube__face--2 {
+  transform: rotateY(90deg) translateZ(50px);
+} /* 右 */
+.cube__face--5 {
+  transform: rotateY(-90deg) translateZ(50px);
+} /* 左 */
+.cube__face--4 {
+  transform: rotateX(90deg) translateZ(50px);
+} /* 上 */
+.cube__face--3 {
+  transform: rotateX(-90deg) translateZ(50px);
+} /* 下 */
+
+/* 控制區 */
+.dice-controls {
+  margin-top: 50px;
+  text-align: center;
+}
+
+.dice-result {
+  margin-top: 20px;
+  color: white;
+  font-size: 24px;
+  min-height: 30px;
+}
