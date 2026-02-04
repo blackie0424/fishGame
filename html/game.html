@@ -113,6 +113,116 @@
         }
       }
 
+      /* ===== Loading 覆蓋層樣式 ===== */
+      .loading-overlay {
+        position: fixed;
+        inset: 0;
+        background: linear-gradient(145deg, #1a252f, #2c3e50);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        transition:
+          opacity 0.5s ease,
+          visibility 0.5s ease;
+      }
+
+      .loading-overlay.hidden {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+
+      .loading-content {
+        text-align: center;
+      }
+
+      .loading-icon {
+        font-size: 80px;
+        margin-bottom: 20px;
+        animation: fishSwim 2s ease-in-out infinite;
+      }
+
+      @keyframes fishSwim {
+        0%,
+        100% {
+          transform: translateX(-20px) scaleX(1);
+        }
+        50% {
+          transform: translateX(20px) scaleX(-1);
+        }
+      }
+
+      .loading-title {
+        font-size: 32px;
+        color: #f5deb3;
+        font-weight: bold;
+        margin-bottom: 30px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      }
+
+      .loading-progress-container {
+        width: 300px;
+        height: 20px;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 10px;
+        border: 2px solid #d4a574;
+        overflow: hidden;
+        margin-bottom: 15px;
+      }
+
+      .loading-progress-bar {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #d4a574, #f5deb3, #d4a574);
+        background-size: 200% 100%;
+        border-radius: 8px;
+        transition: width 0.3s ease;
+        animation: shimmer 1.5s infinite;
+      }
+
+      @keyframes shimmer {
+        0% {
+          background-position: 200% 0;
+        }
+        100% {
+          background-position: -200% 0;
+        }
+      }
+
+      .loading-status {
+        font-size: 16px;
+        color: #ecf0f1;
+        opacity: 0.8;
+      }
+
+      .loading-dots {
+        display: inline-block;
+      }
+
+      .loading-dots::after {
+        content: "";
+        animation: dots 1.5s steps(4, end) infinite;
+      }
+
+      @keyframes dots {
+        0%,
+        20% {
+          content: "";
+        }
+        40% {
+          content: ".";
+        }
+        60% {
+          content: "..";
+        }
+        80%,
+        100% {
+          content: "...";
+        }
+      }
+
       /* 骰子區域 - 左下角 */
       .dice-area {
         position: absolute;
@@ -901,6 +1011,21 @@
     </style>
   </head>
   <body>
+    <!-- Loading 覆蓋層 -->
+    <div class="loading-overlay" id="loading-overlay">
+      <div class="loading-content">
+        <div class="loading-icon">🐟</div>
+        <div class="loading-title">遊戲載入中</div>
+        <div class="loading-progress-container">
+          <div class="loading-progress-bar" id="loading-progress-bar"></div>
+        </div>
+        <div class="loading-status">
+          <span id="loading-status-text">正在準備資料</span>
+          <span class="loading-dots"></span>
+        </div>
+      </div>
+    </div>
+
     <div class="game-container">
       <!-- 遊戲地圖底圖 -->
       <img src="../images/gameMap.png" alt="遊戲地圖" class="game-map" />
@@ -1252,18 +1377,60 @@
       }
 
       /**
+       * 更新載入進度
+       * @param {number} progress - 進度百分比 (0-100)
+       * @param {string} status - 狀態文字
+       */
+      function updateLoadingProgress(progress, status) {
+        const progressBar = document.getElementById("loading-progress-bar");
+        const statusText = document.getElementById("loading-status-text");
+        if (progressBar) progressBar.style.width = progress + "%";
+        if (statusText) statusText.textContent = status;
+      }
+
+      /**
+       * 隱藏載入覆蓋層
+       */
+      function hideLoadingOverlay() {
+        const overlay = document.getElementById("loading-overlay");
+        if (overlay) {
+          overlay.classList.add("hidden");
+        }
+      }
+
+      /**
        * 初始化遊戲
        */
       async function init() {
         try {
-          // 載入牌組資料
+          // 更新進度：開始載入
+          updateLoadingProgress(10, "正在載入魚卡資料");
+
+          // 載入魚卡資料
+          const fishCardsPromise = loadFishCards().then((data) => {
+            updateLoadingProgress(40, "魚卡資料載入完成");
+            return data;
+          });
+
+          // 載入命運卡資料
+          updateLoadingProgress(20, "正在載入命運卡資料");
+          const destinyCardsPromise = loadDestinyCards().then((data) => {
+            updateLoadingProgress(70, "命運卡資料載入完成");
+            return data;
+          });
+
+          // 等待所有資料載入完成
           [fishDeck, fateDeck] = await Promise.all([
-            loadFishCards(),
-            loadDestinyCards(),
+            fishCardsPromise,
+            destinyCardsPromise,
           ]);
+
+          updateLoadingProgress(80, "正在初始化遊戲元件");
 
           // 初始化 FishMan 拖曳功能
           initFishManDrag();
+
+          updateLoadingProgress(90, "正在設定事件監聽");
 
           // 綁定事件
           fishDeckEl.addEventListener("click", drawFishCard);
@@ -1281,6 +1448,12 @@
           diceClickLayer.addEventListener("click", () => {
             diceController.roll();
           });
+
+          // 載入完成，隱藏 loading 覆蓋層
+          updateLoadingProgress(100, "載入完成！");
+          setTimeout(() => {
+            hideLoadingOverlay();
+          }, 300);
 
           // 綁定說明按鈕事件
           const helpButton = document.getElementById("help-button");
