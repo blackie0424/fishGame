@@ -38,10 +38,18 @@ export const SUIT_WEIGHTS = {
 // 紅色花色
 export const RED_SUITS = ["Hearts", "Diamonds"];
 
-// API 路徑
+// GAS API 基底路徑
+export const API_BASE_URL =
+  "https://script.google.com/macros/s/AKfycbzLSFTXH1UsOXyoVFau2I6yUQjKgMJAUsbAz26ousY2gvlyDhv40DKNempJtE3Sl_tR/exec";
+
+// Sheet 名稱
+export const SHEET_NAMES = {
+  FISH_CARDS: "魚牌(撲克牌版本)",
+  DESTINY_CARDS: "命運卡牌",
+};
+
+// API 路徑 (向後相容)
 export const API_PATHS = {
-  FISH_CARDS:
-    "https://script.google.com/macros/s/AKfycbzLSFTXH1UsOXyoVFau2I6yUQjKgMJAUsbAz26ousY2gvlyDhv40DKNempJtE3Sl_tR/exec?sheet=魚牌(撲克牌版本)",
-  DESTINY_CARDS:
-    "https://script.google.com/macros/s/AKfycbzLSFTXH1UsOXyoVFau2I6yUQjKgMJAUsbAz26ousY2gvlyDhv40DKNempJtE3Sl_tR/exec?sheet=命運卡牌",
+  FISH_CARDS: `${API_BASE_URL}?sheet=${encodeURIComponent(SHEET_NAMES.FISH_CARDS)}`,
+  DESTINY_CARDS: `${API_BASE_URL}?sheet=${encodeURIComponent(SHEET_NAMES.DESTINY_CARDS)}`,
 };

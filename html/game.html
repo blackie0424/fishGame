@@ -1254,7 +1254,7 @@
     </div>
 
     <script type="module">
-      import { loadFishCards, loadDestinyCards } from "../js/data-loader.js";
+      import { loadAllGameData } from "../js/data-loader.js";
       import {
         renderFishCardContent,
         renderFateCardContent,
@@ -1403,29 +1403,16 @@
        */
       async function init() {
         try {
-          // 更新進度：開始載入
-          updateLoadingProgress(10, "正在載入魚卡資料");
-
-          // 載入魚卡資料
-          const fishCardsPromise = loadFishCards().then((data) => {
-            updateLoadingProgress(40, "魚卡資料載入完成");
-            return data;
+          // 使用並行載入函式，同時載入所有遊戲資料
+          const gameData = await loadAllGameData((progress, status) => {
+            updateLoadingProgress(progress, status);
           });
 
-          // 載入命運卡資料
-          updateLoadingProgress(20, "正在載入命運卡資料");
-          const destinyCardsPromise = loadDestinyCards().then((data) => {
-            updateLoadingProgress(70, "命運卡資料載入完成");
-            return data;
-          });
+          // 設定牌組資料
+          fishDeck = gameData.fishCards;
+          fateDeck = gameData.destinyCards;
 
-          // 等待所有資料載入完成
-          [fishDeck, fateDeck] = await Promise.all([
-            fishCardsPromise,
-            destinyCardsPromise,
-          ]);
-
-          updateLoadingProgress(80, "正在初始化遊戲元件");
+          updateLoadingProgress(85, "正在初始化遊戲元件");
 
           // 初始化 FishMan 拖曳功能
           initFishManDrag();
