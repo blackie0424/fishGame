@@ -120,20 +120,46 @@
         left: 50%;
         transform: translate(-50%, -50%);
         z-index: 10;
+        width: 150px;
+        height: 150px;
         display: flex;
         flex-direction: column;
         align-items: center;
+        justify-content: center;
       }
 
-      .dice-scene {
+      .dice-area .dice-scene {
         margin: 0;
+        width: 100px;
+        height: 100px;
+      }
+
+      .dice-area .cube {
         cursor: pointer;
+        pointer-events: auto;
+      }
+
+      .dice-area .cube__face {
+        pointer-events: auto;
+        cursor: pointer;
+      }
+
+      .dice-area .cube:hover {
+        filter: brightness(1.1);
+      }
+
+      /* 骰子點擊層 - 確保點擊可以被偵測 */
+      .dice-click-layer {
+        position: absolute;
+        inset: 0;
+        cursor: pointer;
+        z-index: 100;
       }
 
       .dice-result {
         color: #fff;
         text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-        background: rgba(0, 0, 0, 0.6);
+        /*background: rgba(0, 0, 0, 0.6);*/
         padding: 10px 20px;
         border-radius: 10px;
         margin-top: 20px;
@@ -150,6 +176,7 @@
         z-index: 100;
         opacity: 0;
         visibility: hidden;
+        pointer-events: none;
         transition:
           opacity 0.3s ease,
           visibility 0.3s ease;
@@ -158,6 +185,7 @@
       .modal-overlay.active {
         opacity: 1;
         visibility: visible;
+        pointer-events: auto;
       }
 
       /* Modal 卡片容器 */
@@ -231,6 +259,7 @@
 
       <!-- 骰子區域 -->
       <div class="dice-area">
+        <div class="dice-click-layer" id="dice-click-layer"></div>
         <div class="dice-scene">
           <div class="cube" id="dice">
             <div class="cube__face cube__face--1">1</div>
@@ -298,18 +327,14 @@
           modalOverlay.addEventListener("click", closeModal);
 
           // 初始化骰子
-          const diceController = new DiceController(
-            document.getElementById("dice"),
-            null,
-            null, // 不使用按鈕，直接點擊骰子
-          );
+          const diceEl = document.getElementById("dice");
+          const diceClickLayer = document.getElementById("dice-click-layer");
+          const diceController = new DiceController(diceEl, null, null);
 
-          // 點擊骰子場景也可擲骰
-          document
-            .querySelector(".dice-scene")
-            .addEventListener("click", () => {
-              diceController.roll();
-            });
+          // 點擊層綁定擲骰事件
+          diceClickLayer.addEventListener("click", () => {
+            diceController.roll();
+          });
 
           console.log("遊戲初始化完成！");
         } catch (err) {
