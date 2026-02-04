@@ -40,6 +40,8 @@ export const RED_SUITS = ["Hearts", "Diamonds"];
 
 // API 路徑
 export const API_PATHS = {
-  FISH_CARDS: "../json/fishCard.json",
-  DESTINY_CARDS: "../json/destiny.json",
+  FISH_CARDS:
+    "https://script.google.com/macros/s/AKfycbzLSFTXH1UsOXyoVFau2I6yUQjKgMJAUsbAz26ousY2gvlyDhv40DKNempJtE3Sl_tR/exec?sheet=魚牌(撲克牌版本)",
+  DESTINY_CARDS:
+    "https://script.google.com/macros/s/AKfycbzLSFTXH1UsOXyoVFau2I6yUQjKgMJAUsbAz26ousY2gvlyDhv40DKNempJtE3Sl_tR/exec?sheet=命運卡牌",
 };
