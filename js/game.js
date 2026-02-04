@@ -1,6 +1,6 @@
 /**
  * 遊戲主頁面控制器
- * 
+ *
  * 模組結構：
  * - Loading 控制
  * - 牌卡區控制 (魚牌、命運牌)
@@ -12,7 +12,10 @@
  */
 
 import { loadAllGameData } from "./data-loader.js";
-import { renderFishCardContent, renderFateCardContent } from "./card-renderer.js";
+import {
+  renderFishCardContent,
+  renderFateCardContent,
+} from "./card-renderer.js";
 import { getRandomItem, triggerAnimation } from "./utils.js";
 import { DiceController } from "./dice.js";
 
@@ -29,15 +32,15 @@ const elements = {
   loadingOverlay: null,
   loadingProgressBar: null,
   loadingStatusText: null,
-  
+
   // 牌卡區
   fishDeck: null,
   fateDeck: null,
-  
+
   // 骰子區
   dice: null,
   diceClickLayer: null,
-  
+
   // Modal
   modalOverlay: null,
   modalCardContainer: null,
@@ -45,15 +48,15 @@ const elements = {
   cardElement: null,
   collectBtn: null,
   deleteBtn: null,
-  
+
   // 收集區
   collectionSection: null,
-  
+
   // 說明書區
   helpButton: null,
   helpModalOverlay: null,
   helpCloseBtn: null,
-  helpTabs: null
+  helpTabs: null,
 };
 
 /**
@@ -63,22 +66,22 @@ function initElements() {
   elements.loadingOverlay = document.getElementById("loading-overlay");
   elements.loadingProgressBar = document.getElementById("loading-progress-bar");
   elements.loadingStatusText = document.getElementById("loading-status-text");
-  
+
   elements.fishDeck = document.getElementById("fish-deck");
   elements.fateDeck = document.getElementById("fate-deck");
-  
+
   elements.dice = document.getElementById("dice");
   elements.diceClickLayer = document.getElementById("dice-click-layer");
-  
+
   elements.modalOverlay = document.getElementById("modal-overlay");
   elements.modalCardContainer = document.getElementById("modal-card-container");
   elements.cardContent = document.getElementById("card-content");
   elements.cardElement = document.getElementById("card-element");
   elements.collectBtn = document.getElementById("collect-btn");
   elements.deleteBtn = document.getElementById("delete-btn");
-  
+
   elements.collectionSection = document.getElementById("collection-section");
-  
+
   elements.helpButton = document.getElementById("help-button");
   elements.helpModalOverlay = document.getElementById("help-modal-overlay");
   elements.helpCloseBtn = document.getElementById("help-close-btn");
@@ -235,7 +238,8 @@ function viewCollectedCard(index) {
 function deleteCurrentFish(e) {
   e.stopPropagation();
 
-  if (currentViewIndex < 0 || currentViewIndex >= collectedFishes.length) return;
+  if (currentViewIndex < 0 || currentViewIndex >= collectedFishes.length)
+    return;
 
   collectedFishes.splice(currentViewIndex, 1);
   renderCollectionSection();
@@ -243,7 +247,9 @@ function deleteCurrentFish(e) {
 }
 
 function renderCollectionSection() {
-  const title = elements.collectionSection.querySelector(".collection-section-title");
+  const title = elements.collectionSection.querySelector(
+    ".collection-section-title",
+  );
   elements.collectionSection.innerHTML = "";
   elements.collectionSection.appendChild(title);
 
@@ -279,8 +285,10 @@ function initPlayerDrag() {
       player.classList.add("dragging");
 
       const rect = player.getBoundingClientRect();
-      const clientX = e.type === "touchstart" ? e.touches[0].clientX : e.clientX;
-      const clientY = e.type === "touchstart" ? e.touches[0].clientY : e.clientY;
+      const clientX =
+        e.type === "touchstart" ? e.touches[0].clientX : e.clientX;
+      const clientY =
+        e.type === "touchstart" ? e.touches[0].clientY : e.clientY;
 
       startX = clientX;
       startY = clientY;
@@ -314,8 +322,14 @@ function initPlayerDrag() {
       const containerRect = container.getBoundingClientRect();
       const playerRect = player.getBoundingClientRect();
 
-      const boundedX = Math.max(0, Math.min(newX, containerRect.width - playerRect.width));
-      const boundedY = Math.max(0, Math.min(newY, containerRect.height - playerRect.height));
+      const boundedX = Math.max(
+        0,
+        Math.min(newX, containerRect.width - playerRect.width),
+      );
+      const boundedY = Math.max(
+        0,
+        Math.min(newY, containerRect.height - playerRect.height),
+      );
 
       player.style.left = boundedX + "px";
       player.style.top = boundedY + "px";
@@ -352,7 +366,9 @@ function initManualSection() {
   elements.helpTabs.forEach((tab) => {
     tab.addEventListener("click", () => {
       elements.helpTabs.forEach((t) => t.classList.remove("active"));
-      document.querySelectorAll(".help-tab-content").forEach((c) => c.classList.remove("active"));
+      document
+        .querySelectorAll(".help-tab-content")
+        .forEach((c) => c.classList.remove("active"));
 
       tab.classList.add("active");
       const tabId = tab.getAttribute("data-tab");
