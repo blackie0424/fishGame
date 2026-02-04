@@ -486,6 +486,190 @@
         margin-top: 25px;
         opacity: 0.8;
       }
+
+      /* 收集按鈕 */
+      .collect-btn {
+        position: absolute;
+        bottom: 120px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 12px 30px;
+        font-size: 18px;
+        font-weight: bold;
+        color: #fff;
+        background: linear-gradient(145deg, #27ae60, #1e8449);
+        border: 3px solid #2ecc71;
+        border-radius: 25px;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4);
+        transition: all 0.3s ease;
+        z-index: 110;
+        display: none;
+      }
+
+      .collect-btn:hover {
+        transform: translateX(-50%) scale(1.05);
+        box-shadow: 0 6px 20px rgba(46, 204, 113, 0.6);
+      }
+
+      .collect-btn:active {
+        transform: translateX(-50%) scale(0.95);
+      }
+
+      .collect-btn.visible {
+        display: block;
+      }
+
+      /* 收集區域 - 右下角 */
+      .collection-area {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        display: flex;
+        flex-wrap: wrap-reverse;
+        gap: 8px;
+        max-width: 300px;
+        max-height: 400px;
+        overflow-y: auto;
+        padding: 15px;
+        background: rgba(0, 0, 0, 0.6);
+        border: 2px solid rgba(212, 165, 116, 0.5);
+        border-radius: 15px;
+        z-index: 50;
+        opacity: 0;
+        visibility: hidden;
+        transition:
+          opacity 0.3s ease,
+          visibility 0.3s ease;
+      }
+
+      .collection-area.has-cards {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .collection-area-title {
+        position: absolute;
+        top: -30px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        color: #f5deb3;
+        font-size: 14px;
+        font-weight: bold;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+      }
+
+      /* 收集的魚卡縮圖 */
+      .collected-card {
+        width: 60px;
+        height: 84px;
+        border-radius: 6px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+        cursor: pointer;
+        transition:
+          transform 0.3s ease,
+          box-shadow 0.3s ease;
+        position: relative;
+        background: linear-gradient(145deg, #fff9e6, #f5e6c8);
+        border: 2px solid #d4a574;
+      }
+
+      .collected-card:hover {
+        transform: scale(1.15);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        z-index: 10;
+      }
+
+      .collected-card-img {
+        width: 100%;
+        height: 60%;
+        object-fit: contain;
+        padding: 4px;
+      }
+
+      .collected-card-name {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(0, 0, 0, 0.7);
+        color: #fff;
+        font-size: 8px;
+        text-align: center;
+        padding: 2px 1px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      /* 收集動畫 */
+      @keyframes collectCard {
+        0% {
+          transform: scale(1);
+          opacity: 1;
+        }
+        50% {
+          transform: scale(0.5);
+          opacity: 0.8;
+        }
+        100% {
+          transform: scale(0.1) translateX(100vw) translateY(100vh);
+          opacity: 0;
+        }
+      }
+
+      .modal-card-container.collecting {
+        animation: collectCard 0.6s ease-in forwards;
+        pointer-events: none;
+      }
+
+      /* 新增卡片彈入動畫 */
+      @keyframes cardBounceIn {
+        0% {
+          transform: scale(0) rotate(-10deg);
+          opacity: 0;
+        }
+        50% {
+          transform: scale(1.2) rotate(5deg);
+        }
+        100% {
+          transform: scale(1) rotate(0);
+          opacity: 1;
+        }
+      }
+
+      .collected-card.bounce-in {
+        animation: cardBounceIn 0.4s ease-out;
+      }
+
+      /* 收集計數器 */
+      .collection-counter {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: linear-gradient(145deg, #8b4513, #654321);
+        border: 2px solid #d4a574;
+        border-radius: 20px;
+        padding: 8px 15px;
+        color: #f5deb3;
+        font-size: 14px;
+        font-weight: bold;
+        z-index: 49;
+        display: none;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+      }
+
+      .collection-counter.visible {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .collection-counter::before {
+        content: "🐟";
+      }
     </style>
   </head>
   <body>
@@ -544,7 +728,13 @@
           </div>
         </div>
       </div>
+      <button class="collect-btn" id="collect-btn">🐟 收集這張魚牌</button>
       <div class="modal-hint">點擊任意處關閉</div>
+    </div>
+
+    <!-- 魚牌收集區域 - 右下角 -->
+    <div class="collection-area" id="collection-area">
+      <span class="collection-area-title">已收集魚牌</span>
     </div>
 
     <!-- 遊戲說明彈出視窗 -->
@@ -587,6 +777,10 @@
       let fishDeck = [];
       let fateDeck = [];
 
+      // 收集的魚牌（記憶體儲存，重整即消失）
+      let collectedFishes = [];
+      let currentFish = null; // 目前顯示的魚牌
+
       // DOM 元素
       const fishDeckEl = document.getElementById("fish-deck");
       const fateDeckEl = document.getElementById("fate-deck");
@@ -596,6 +790,8 @@
       );
       const cardContent = document.getElementById("card-content");
       const cardElement = document.getElementById("card-element");
+      const collectBtn = document.getElementById("collect-btn");
+      const collectionArea = document.getElementById("collection-area");
 
       /**
        * 初始化遊戲
@@ -611,7 +807,8 @@
           // 綁定事件
           fishDeckEl.addEventListener("click", drawFishCard);
           fateDeckEl.addEventListener("click", drawFateCard);
-          modalOverlay.addEventListener("click", closeModal);
+          modalOverlay.addEventListener("click", handleModalClick);
+          collectBtn.addEventListener("click", collectCurrentFish);
 
           // 初始化骰子
           const diceEl = document.getElementById("dice");
@@ -656,10 +853,14 @@
         if (fishDeck.length === 0) return;
 
         const fish = getRandomItem(fishDeck);
+        currentFish = fish; // 記錄當前魚牌
 
         // 設定為魚卡樣式
         cardContent.className = "card-face card-front";
         cardContent.innerHTML = renderFishCardContent(fish);
+
+        // 顯示收集按鈕
+        collectBtn.classList.add("visible");
 
         showModal();
       }
@@ -671,10 +872,14 @@
         if (fateDeck.length === 0) return;
 
         const card = getRandomItem(fateDeck);
+        currentFish = null; // 命運卡不能收集
 
         // 設定為命運卡樣式
         cardContent.className = "card-face card-front fate-card";
         cardContent.innerHTML = renderFateCardContent(card);
+
+        // 隱藏收集按鈕
+        collectBtn.classList.remove("visible");
 
         showModal();
       }
@@ -685,6 +890,7 @@
       function showModal() {
         modalOverlay.classList.add("active");
         modalCardContainer.classList.remove("pop-in");
+        modalCardContainer.classList.remove("collecting");
 
         // 觸發動畫
         void modalCardContainer.offsetWidth;
@@ -693,10 +899,80 @@
       }
 
       /**
+       * 處理 Modal 點擊事件
+       */
+      function handleModalClick(e) {
+        // 如果點擊的是收集按鈕，不關閉 Modal
+        if (e.target === collectBtn || collectBtn.contains(e.target)) {
+          return;
+        }
+        closeModal();
+      }
+
+      /**
        * 關閉 Modal
        */
       function closeModal() {
         modalOverlay.classList.remove("active");
+        collectBtn.classList.remove("visible");
+        currentFish = null;
+      }
+
+      /**
+       * 收集當前魚牌
+       */
+      function collectCurrentFish(e) {
+        e.stopPropagation(); // 防止事件冒泡關閉 Modal
+
+        if (!currentFish) return;
+
+        // 將魚牌加入收集陣列
+        collectedFishes.push({ ...currentFish });
+
+        // 執行收集動畫
+        modalCardContainer.classList.add("collecting");
+
+        // 動畫結束後加入收集區
+        setTimeout(() => {
+          addCardToCollection(currentFish);
+          closeModal();
+          modalCardContainer.classList.remove("collecting");
+        }, 600);
+      }
+
+      /**
+       * 將卡片加入收集區
+       */
+      function addCardToCollection(fish) {
+        // 建立縮圖元素
+        const cardThumb = document.createElement("div");
+        cardThumb.className = "collected-card bounce-in";
+        cardThumb.title = `${fish.name} - ${fish.capture_condition}`;
+
+        // 魚的圖片
+        const img = document.createElement("img");
+        img.src = `../images/${fish.image}`;
+        img.alt = fish.name;
+        img.className = "collected-card-img";
+
+        // 魚的名稱
+        const nameLabel = document.createElement("div");
+        nameLabel.className = "collected-card-name";
+        nameLabel.textContent = fish.name;
+
+        cardThumb.appendChild(img);
+        cardThumb.appendChild(nameLabel);
+
+        // 加入收集區
+        collectionArea.appendChild(cardThumb);
+
+        // 顯示收集區
+        collectionArea.classList.add("has-cards");
+
+        // 移除彈入動畫類別
+        setTimeout(() => {
+          cardThumb.classList.remove("bounce-in");
+        }, 400);
       }
 
       // 啟動遊戲
