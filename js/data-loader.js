@@ -9,11 +9,66 @@ import { API_BASE_URL, SHEET_NAMES, API_PATHS } from "./constants.js";
 const dataCache = {
   fishCards: null,
   destinyCards: null,
+  imageCache: new Map(), // 圖片快取
   isLoaded: false,
 };
 
 // 同時掛載到 window 供全域存取
 window.gameData = dataCache;
+
+/**
+ * 預載入單張圖片
+ * @param {string} src - 圖片完整路徑
+ * @returns {Promise<HTMLImageElement>} 載入完成的圖片元素
+ */
+function preloadImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error(`圖片載入失敗: ${src}`));
+    img.src = src;
+  });
+}
+
+/**
+ * 從魚卡資料中預載入所有不重複的圖片
+ * @param {Array} fishCards - 魚卡資料陣列
+ * @param {string} basePath - 圖片基礎路徑
+ * @param {Function} onProgress - 進度回調函式 (loaded, total)
+ * @returns {Promise<Map<string, HTMLImageElement>>} 圖片快取 Map
+ */
+async function preloadFishImages(
+  fishCards,
+  basePath = "../images/",
+  onProgress = null,
+) {
+  // 取得不重複的圖片路徑
+  const uniqueImages = [...new Set(fishCards.map((fish) => fish.image))];
+  const imageCache = new Map();
+
+  let loaded = 0;
+  const total = uniqueImages.length;
+
+  // 並行載入所有圖片
+  const loadPromises = uniqueImages.map(async (imagePath) => {
+    try {
+      const fullPath = `${basePath}${imagePath}`;
+      const img = await preloadImage(fullPath);
+      imageCache.set(imagePath, img);
+      loaded++;
+      onProgress?.(loaded, total);
+    } catch (error) {
+      console.warn(`圖片預載入失敗: ${imagePath}`, error);
+      loaded++;
+      onProgress?.(loaded, total);
+    }
+  });
+
+  await Promise.all(loadPromises);
+
+  console.log(`圖片預載入完成: ${imageCache.size}/${total} 張`);
+  return imageCache;
+}
 
 /**
  * 載入 JSON 資料
@@ -99,23 +154,39 @@ export async function loadAllGameData(onProgress = null) {
       destinyPromise,
     ]);
 
-    onProgress?.(80, "資料載入完成");
+    onProgress?.(60, "資料載入完成，開始預載入圖片");
 
     // 儲存到快取
     dataCache.fishCards = fishCards;
     dataCache.destinyCards = destinyCards;
+
+    // 預載入魚卡圖片
+    const imageCache = await preloadFishImages(
+      fishCards,
+      "../images/",
+      (loaded, total) => {
+        const imageProgress = 60 + Math.floor((loaded / total) * 35);
+        onProgress?.(imageProgress, `正在載入圖片 ${loaded}/${total}`);
+      },
+    );
+
+    // 儲存圖片快取
+    dataCache.imageCache = imageCache;
     dataCache.isLoaded = true;
 
     // 同時更新全域變數供其他模組使用
     window.allFish = fishCards;
     window.allDestiny = destinyCards;
 
+    onProgress?.(100, "所有資源載入完成");
+
     console.log("遊戲資料載入完成:", {
       魚卡數量: fishCards.length,
       命運卡數量: destinyCards.length,
+      圖片數量: imageCache.size,
     });
 
-    return { fishCards, destinyCards };
+    return { fishCards, destinyCards, imageCache };
   } catch (error) {
     console.error("遊戲資料載入失敗:", error);
     throw error;
@@ -144,7 +215,25 @@ export function getCachedDestinyCards() {
 export function clearCache() {
   dataCache.fishCards = null;
   dataCache.destinyCards = null;
+  dataCache.imageCache.clear();
   dataCache.isLoaded = false;
   window.allFish = null;
   window.allDestiny = null;
+}
+
+/**
+ * 取得快取的圖片（同步）
+ * @param {string} imagePath - 圖片路徑（對應 JSON 中的 image 欄位）
+ * @returns {HTMLImageElement|null} 圖片元素或 null
+ */
+export function getCachedImage(imagePath) {
+  return dataCache.imageCache.get(imagePath) || null;
+}
+
+/**
+ * 取得所有快取的圖片
+ * @returns {Map<string, HTMLImageElement>} 圖片快取 Map
+ */
+export function getAllCachedImages() {
+  return dataCache.imageCache;
 }
