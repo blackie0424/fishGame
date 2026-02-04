@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tao Fish - 遊戲主畫面</title>
+    <link rel="stylesheet" href="../css/main.css" />
+    <style>
+      :root {
+        --render-scale: 0.35;
+        --card-back-scale: 0.2;
+      }
+
+      /* 遊戲主容器 */
+      .game-container {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      /* 遊戲地圖底圖 */
+      .game-map {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      /* 牌卡區域容器 */
+      .card-deck-area {
+        position: absolute;
+        top: 90px;
+        left: 80px;
+        display: flex;
+        gap: 45px;
+        z-index: 10;
+      }
+
+      /* 牌卡背面共用樣式 */
+      .deck-card {
+        width: calc(var(--card-w) * var(--card-back-scale));
+        height: calc(var(--card-h) * var(--card-back-scale));
+        border-radius: calc(var(--radius-card) * var(--card-back-scale));
+        cursor: pointer;
+        transition:
+          transform 0.3s ease,
+          box-shadow 0.3s ease;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+      }
+
+      .deck-card:hover {
+        transform: translateY(-10px) scale(1.05);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+      }
+
+      .deck-card:active {
+        transform: scale(0.95);
+      }
+
+      /* 魚類牌卡背面 */
+      .fish-deck {
+        background-image: url("../images/template_back_v1.png");
+        background-size: cover;
+        background-position: center;
+      }
+
+      /* 命運牌卡背面 - CSS 繪製 */
+      .fate-deck {
+        background: linear-gradient(145deg, #2c3e50, #1a252f);
+        border: 4px solid #f39c12;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .fate-deck::before {
+        content: "";
+        position: absolute;
+        inset: 8px;
+        border: 2px dashed #f39c12;
+        border-radius: calc(var(--radius-card) * var(--card-back-scale) - 8px);
+        opacity: 0.6;
+      }
+
+      .fate-deck-icon {
+        font-size: 80px;
+        color: #f39c12;
+        text-shadow: 0 0 20px rgba(243, 156, 18, 0.5);
+        animation: pulse 2s infinite;
+      }
+
+      .fate-deck-label {
+        font-size: 16px;
+        color: #ecf0f1;
+        margin-top: 10px;
+        font-weight: bold;
+        letter-spacing: 2px;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+        50% {
+          transform: scale(1.1);
+          opacity: 0.8;
+        }
+      }
+
+      /* 骰子區域 - 置中 */
+      .dice-area {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .dice-scene {
+        margin: 0;
+        cursor: pointer;
+      }
+
+      .dice-result {
+        color: #fff;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        background: rgba(0, 0, 0, 0.6);
+        padding: 10px 20px;
+        border-radius: 10px;
+        margin-top: 20px;
+      }
+
+      /* Modal 覆蓋層 */
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        opacity: 0;
+        visibility: hidden;
+        transition:
+          opacity 0.3s ease,
+          visibility 0.3s ease;
+      }
+
+      .modal-overlay.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      /* Modal 卡片容器 */
+      .modal-card-container {
+        cursor: pointer;
+      }
+
+      .modal-card-container .scene {
+        visibility: visible;
+      }
+
+      /* 卡片彈出動畫 */
+      .modal-card-container.pop-in .card {
+        animation: cardPopIn 0.5s ease-out forwards;
+      }
+
+      @keyframes cardPopIn {
+        0% {
+          transform: translateY(200px) scale(0.8) rotateX(-30deg);
+          opacity: 0;
+        }
+        100% {
+          transform: translateY(0) scale(1) rotateX(0);
+          opacity: 1;
+        }
+      }
+
+      /* 提示文字 */
+      .modal-hint {
+        position: absolute;
+        bottom: 50px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: #fff;
+        font-size: 18px;
+        opacity: 0.8;
+        animation: fadeInOut 2s infinite;
+      }
+
+      @keyframes fadeInOut {
+        0%,
+        100% {
+          opacity: 0.4;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="game-container">
+      <!-- 遊戲地圖底圖 -->
+      <img src="../images/gameMap.png" alt="遊戲地圖" class="game-map" />
+
+      <!-- 左上角牌卡區域 -->
+      <div class="card-deck-area">
+        <!-- 魚類牌卡背面 -->
+        <div
+          class="deck-card fish-deck"
+          id="fish-deck"
+          title="點擊抽魚卡"
+        ></div>
+
+        <!-- 命運牌卡背面 -->
+        <div class="deck-card fate-deck" id="fate-deck" title="點擊抽命運卡">
+          <span class="fate-deck-icon">❓</span>
+          <span class="fate-deck-label">命運</span>
+        </div>
+      </div>
+
+      <!-- 骰子區域 -->
+      <div class="dice-area">
+        <div class="dice-scene">
+          <div class="cube" id="dice">
+            <div class="cube__face cube__face--1">1</div>
+            <div class="cube__face cube__face--2">2</div>
+            <div class="cube__face cube__face--3">3</div>
+            <div class="cube__face cube__face--4">4</div>
+            <div class="cube__face cube__face--5">5</div>
+            <div class="cube__face cube__face--6">6</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 覆蓋層 - 顯示抽到的卡片 -->
+    <div class="modal-overlay" id="modal-overlay">
+      <div class="modal-card-container" id="modal-card-container">
+        <div class="scene" id="card-scene">
+          <div class="card-wrapper">
+            <div class="card" id="card-element">
+              <div class="card-face card-front" id="card-content"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-hint">點擊任意處關閉</div>
+    </div>
+
+    <script type="module">
+      import { loadFishCards, loadDestinyCards } from "../js/data-loader.js";
+      import {
+        renderFishCardContent,
+        renderFateCardContent,
+      } from "../js/card-renderer.js";
+      import { getRandomItem, triggerAnimation } from "../js/utils.js";
+      import { DiceController } from "../js/dice.js";
+
+      // 牌組資料
+      let fishDeck = [];
+      let fateDeck = [];
+
+      // DOM 元素
+      const fishDeckEl = document.getElementById("fish-deck");
+      const fateDeckEl = document.getElementById("fate-deck");
+      const modalOverlay = document.getElementById("modal-overlay");
+      const modalCardContainer = document.getElementById(
+        "modal-card-container",
+      );
+      const cardContent = document.getElementById("card-content");
+      const cardElement = document.getElementById("card-element");
+
+      /**
+       * 初始化遊戲
+       */
+      async function init() {
+        try {
+          // 載入牌組資料
+          [fishDeck, fateDeck] = await Promise.all([
+            loadFishCards(),
+            loadDestinyCards(),
+          ]);
+
+          // 綁定事件
+          fishDeckEl.addEventListener("click", drawFishCard);
+          fateDeckEl.addEventListener("click", drawFateCard);
+          modalOverlay.addEventListener("click", closeModal);
+
+          // 初始化骰子
+          const diceController = new DiceController(
+            document.getElementById("dice"),
+            null,
+            null, // 不使用按鈕，直接點擊骰子
+          );
+
+          // 點擊骰子場景也可擲骰
+          document
+            .querySelector(".dice-scene")
+            .addEventListener("click", () => {
+              diceController.roll();
+            });
+
+          console.log("遊戲初始化完成！");
+        } catch (err) {
+          console.error("初始化失敗:", err);
+        }
+      }
+
+      /**
+       * 抽魚卡
+       */
+      function drawFishCard() {
+        if (fishDeck.length === 0) return;
+
+        const fish = getRandomItem(fishDeck);
+
+        // 設定為魚卡樣式
+        cardContent.className = "card-face card-front";
+        cardContent.innerHTML = renderFishCardContent(fish);
+
+        showModal();
+      }
+
+      /**
+       * 抽命運卡
+       */
+      function drawFateCard() {
+        if (fateDeck.length === 0) return;
+
+        const card = getRandomItem(fateDeck);
+
+        // 設定為命運卡樣式
+        cardContent.className = "card-face card-front fate-card";
+        cardContent.innerHTML = renderFateCardContent(card);
+
+        showModal();
+      }
+
+      /**
+       * 顯示 Modal
+       */
+      function showModal() {
+        modalOverlay.classList.add("active");
+        modalCardContainer.classList.remove("pop-in");
+
+        // 觸發動畫
+        void modalCardContainer.offsetWidth;
+        modalCardContainer.classList.add("pop-in");
+        triggerAnimation(cardElement, "drawing");
+      }
+
+      /**
+       * 關閉 Modal
+       */
+      function closeModal() {
+        modalOverlay.classList.remove("active");
+      }
+
+      // 啟動遊戲
+      init();
+    </script>
+  </body>
+</html>
