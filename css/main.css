@@ -17,3 +17,6 @@
 @import "./components/fish-card.css";
 @import "./components/fate-card.css";
 @import "./components/dice.css";
+
+/* 頁面樣式 */
+@import "./components/game.css";
