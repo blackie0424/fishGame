@@ -615,14 +615,17 @@
           opacity: 1;
         }
         100% {
-          transform: scale(0.15)
-            translate(calc(50vw - 100px), calc(50vh - 100px));
-          opacity: 0.8;
+          /* 從中央(50vw, 50vh)移動到右下角(100vw-100px, 100vh-100px) */
+          /* X位移: (100vw - 100px) - 50vw = 50vw - 100px (向右) */
+          /* Y位移: (100vh - 100px) - 50vh = 50vh - 100px (向下) */
+          transform: scale(0.1)
+            translate(calc(50vw + 2500px), calc(50vh + 1000px));
+          opacity: 1;
         }
       }
 
       .modal-card-container.collecting {
-        animation: collectCard 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        animation: collectCard 1s cubic-bezier(1, 0, 1, 1) forwards;
         pointer-events: none;
       }
 
