@@ -8,6 +8,11 @@
   height: 100px;
   margin: 50px;
   perspective: 600px;
+  /* 防止子元素溢出造成的閃爍 */
+  overflow: visible;
+  /* 啟用 GPU 加速 */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
 }
 
 /* 骰子本體 */
@@ -16,8 +21,14 @@
   height: 100%;
   position: relative;
   transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
   transform: rotateX(-30deg) rotateY(-30deg);
   transition: transform 1.5s ease-out;
+  /* 預告瀏覽器此屬性會變化，優化渲染 */
+  will-change: transform;
+  /* 啟用 GPU 加速層 */
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 /* 骰子的六個面 */
@@ -33,7 +44,12 @@
   color: var(--color-danger);
   text-align: center;
   box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.1);
-  backface-visibility: hidden;
+  /* 使用 visible 避免某些 GPU 的渲染問題 */
+  backface-visibility: visible;
+  -webkit-backface-visibility: visible;
+  /* 啟用 GPU 加速 */
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
 }
 
 /* 定位六個面 - 標準骰子相對面之和為 7 */

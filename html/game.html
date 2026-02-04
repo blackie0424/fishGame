@@ -126,12 +126,17 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
+        /* 建立獨立的層疊上下文，避免與其他元素干擾 */
+        isolation: isolate;
       }
 
       .dice-area .dice-scene {
         margin: 0;
         width: 100px;
         height: 100px;
+        /* 確保 3D 空間正確 */
+        transform-style: preserve-3d;
+        -webkit-transform-style: preserve-3d;
       }
 
       .dice-area .cube {
@@ -142,10 +147,18 @@
       .dice-area .cube__face {
         pointer-events: auto;
         cursor: pointer;
+        /* 防止文字選取導致的閃爍 */
+        user-select: none;
+        -webkit-user-select: none;
       }
 
       .dice-area .cube:hover {
         filter: brightness(1.1);
+      }
+
+      /* 防止骰子動畫時的閃爍 */
+      .dice-area .cube.rolling {
+        will-change: transform;
       }
 
       /* 骰子點擊層 - 確保點擊可以被偵測 */
