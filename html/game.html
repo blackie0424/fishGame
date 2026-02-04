@@ -381,8 +381,10 @@
         border: 4px solid #d4a574;
         border-radius: 20px;
         padding: 40px;
-        max-width: 500px;
+        max-width: 650px;
         width: 90%;
+        max-height: 85vh;
+        overflow-y: auto;
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
         transform: scale(0.8) translateY(50px);
         transition: transform 0.3s ease;
@@ -485,6 +487,121 @@
         font-size: 14px;
         margin-top: 25px;
         opacity: 0.8;
+      }
+
+      /* 分頁標籤樣式 */
+      .help-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 25px;
+        border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        padding-bottom: 0;
+      }
+
+      .help-tab {
+        padding: 12px 24px;
+        background: transparent;
+        border: none;
+        color: #888;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        position: relative;
+        transition: all 0.3s ease;
+        border-radius: 10px 10px 0 0;
+      }
+
+      .help-tab:hover {
+        color: #f5deb3;
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .help-tab.active {
+        color: #f39c12;
+        background: rgba(243, 156, 18, 0.1);
+      }
+
+      .help-tab.active::after {
+        content: "";
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: #f39c12;
+        border-radius: 3px 3px 0 0;
+      }
+
+      .help-tab-icon {
+        margin-right: 8px;
+      }
+
+      /* 分頁內容 */
+      .help-tab-content {
+        display: none;
+        animation: fadeIn 0.3s ease;
+      }
+
+      .help-tab-content.active {
+        display: block;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* 角色說明區塊 */
+      .help-section-title {
+        font-size: 18px;
+        color: #f39c12;
+        margin: 25px 0 15px 0;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #f39c12;
+      }
+
+      .role-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+        margin-top: 10px;
+      }
+
+      .role-table th,
+      .role-table td {
+        padding: 10px 8px;
+        text-align: left;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .role-table th {
+        background: rgba(243, 156, 18, 0.2);
+        color: #f39c12;
+        font-weight: bold;
+      }
+
+      .role-table td {
+        color: #ecf0f1;
+      }
+
+      .role-table tr:hover td {
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .role-table .role-name {
+        color: #f5deb3;
+        font-weight: bold;
+      }
+
+      .role-table .target-fish {
+        color: #3498db;
+        font-style: italic;
       }
 
       /* 收集按鈕 */
@@ -916,24 +1033,92 @@
       <div class="help-modal">
         <button class="help-close-btn" id="help-close-btn">&times;</button>
         <h2 class="help-modal-title">遊戲說明</h2>
-        <ul class="help-steps">
-          <li class="help-step">
-            <span class="step-number">1</span>
-            <span class="step-content"
-              >請先抽取命運卡，根據命運卡的說明進行丟骰子或是換人等動作。</span
-            >
-          </li>
-          <li class="help-step">
-            <span class="step-number">2</span>
-            <span class="step-content">點擊骰子可進行丟骰子。</span>
-          </li>
-          <li class="help-step">
-            <span class="step-number">3</span>
-            <span class="step-content"
-              >符合中魚條件可以抽取魚牌，並再次丟骰子，確認符合捕捉條件。</span
-            >
-          </li>
-        </ul>
+
+        <!-- 分頁標籤 -->
+        <div class="help-tabs">
+          <button class="help-tab active" data-tab="rules">
+            <span class="help-tab-icon">🎮</span>遊戲規則
+          </button>
+          <button class="help-tab" data-tab="roles">
+            <span class="help-tab-icon">🎭</span>角色任務
+          </button>
+        </div>
+
+        <!-- 遊戲規則分頁 -->
+        <div class="help-tab-content active" id="tab-rules">
+          <ul class="help-steps">
+            <li class="help-step">
+              <span class="step-number">1</span>
+              <span class="step-content"
+                >請先抽取命運卡，根據命運卡的說明進行丟骰子或是換人等動作。</span
+              >
+            </li>
+            <li class="help-step">
+              <span class="step-number">2</span>
+              <span class="step-content">點擊骰子可進行丟骰子。</span>
+            </li>
+            <li class="help-step">
+              <span class="step-number">3</span>
+              <span class="step-content"
+                >符合中魚條件可以抽取魚牌，並再次丟骰子，確認符合捕捉條件。</span
+              >
+            </li>
+          </ul>
+        </div>
+
+        <!-- 角色任務分頁 -->
+        <div class="help-tab-content" id="tab-roles">
+          <table class="role-table">
+            <thead>
+              <tr>
+                <th>角色</th>
+                <th>名稱狀態</th>
+                <th>勝利條件</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="role-name">角色一</td>
+                <td>小孩</td>
+                <td>至少 <strong>3</strong> 條魚</td>
+              </tr>
+              <tr>
+                <td class="role-name">角色二</td>
+                <td>成年男子</td>
+                <td>
+                  至少 <strong>5</strong> 條魚，包含目標魚
+                  <span class="target-fish">cilat</span> 一隻
+                </td>
+              </tr>
+              <tr>
+                <td class="role-name">角色三</td>
+                <td>結婚的男人</td>
+                <td>
+                  至少 <strong>6</strong> 條魚，包含目標魚
+                  <span class="target-fish">ilek</span> 一隻
+                </td>
+              </tr>
+              <tr>
+                <td class="role-name">角色四</td>
+                <td>有小孩的爸爸</td>
+                <td>
+                  至少 <strong>6</strong> 條魚，包含目標魚
+                  <span class="target-fish">ilek</span> 一隻
+                </td>
+              </tr>
+              <tr>
+                <td class="role-name">角色五</td>
+                <td>有孫子的阿公</td>
+                <td>
+                  至少 <strong>3</strong> 條魚，包含目標魚
+                  <span class="target-fish">tapez</span> 或
+                  <span class="target-fish">acyod</span> 一隻
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
         <p class="help-modal-hint">點擊任意處或 × 按鈕關閉</p>
       </div>
     </div>
@@ -1110,6 +1295,23 @@
 
           helpCloseBtn.addEventListener("click", () => {
             helpModalOverlay.classList.remove("active");
+          });
+
+          // 綁定分頁標籤切換事件
+          const helpTabs = document.querySelectorAll(".help-tab");
+          helpTabs.forEach((tab) => {
+            tab.addEventListener("click", () => {
+              // 移除所有 active 狀態
+              helpTabs.forEach((t) => t.classList.remove("active"));
+              document
+                .querySelectorAll(".help-tab-content")
+                .forEach((c) => c.classList.remove("active"));
+
+              // 設定當前標籤為 active
+              tab.classList.add("active");
+              const tabId = tab.getAttribute("data-tab");
+              document.getElementById(`tab-${tabId}`).classList.add("active");
+            });
           });
 
           console.log("遊戲初始化完成！");
