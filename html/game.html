@@ -707,6 +707,75 @@
       .delete-btn.visible {
         display: block;
       }
+
+      /* ===== FishMan 遊戲人物 ===== */
+      .fishman-container {
+        position: absolute;
+        width: 60px;
+        height: 90px;
+        cursor: grab;
+        z-index: 50;
+        user-select: none;
+        -webkit-user-select: none;
+        transition:
+          filter 0.2s ease,
+          transform 0.1s ease;
+      }
+
+      .fishman-container:hover {
+        filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.8));
+        transform: scale(1.05);
+      }
+
+      .fishman-container:active,
+      .fishman-container.dragging {
+        cursor: grabbing;
+        z-index: 100;
+        filter: drop-shadow(0 0 15px rgba(255, 215, 0, 1));
+        transform: scale(1.1);
+        transition: none;
+      }
+
+      .fishman-img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        pointer-events: none;
+      }
+
+      /* 玩家編號標籤 */
+      .fishman-label {
+        position: absolute;
+        bottom: -20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(145deg, #2c3e50, #1a252f);
+        color: #f5deb3;
+        font-size: 12px;
+        font-weight: bold;
+        padding: 2px 8px;
+        border-radius: 10px;
+        border: 2px solid #d4a574;
+        white-space: nowrap;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+      }
+
+      /* 不同玩家的邊框顏色 */
+      .fishman-container[data-player="1"] .fishman-label {
+        border-color: #e74c3c;
+      }
+      .fishman-container[data-player="2"] .fishman-label {
+        border-color: #3498db;
+      }
+      .fishman-container[data-player="3"] .fishman-label {
+        border-color: #2ecc71;
+      }
+      .fishman-container[data-player="4"] .fishman-label {
+        border-color: #f39c12;
+      }
+      .fishman-container[data-player="5"] .fishman-label {
+        border-color: #9b59b6;
+      }
     </style>
   </head>
   <body>
@@ -751,6 +820,73 @@
             <div class="cube__face cube__face--6">6</div>
           </div>
         </div>
+      </div>
+
+      <!-- FishMan 遊戲人物 -->
+      <div
+        class="fishman-container"
+        data-player="1"
+        style="right: 320px; bottom: 30px"
+      >
+        <img
+          src="../images/fishMan.png"
+          alt="玩家1"
+          class="fishman-img"
+          loading="lazy"
+        />
+        <span class="fishman-label">玩家 1</span>
+      </div>
+      <div
+        class="fishman-container"
+        data-player="2"
+        style="right: 240px; bottom: 30px"
+      >
+        <img
+          src="../images/fishMan.png"
+          alt="玩家2"
+          class="fishman-img"
+          loading="lazy"
+        />
+        <span class="fishman-label">玩家 2</span>
+      </div>
+      <div
+        class="fishman-container"
+        data-player="3"
+        style="right: 160px; bottom: 30px"
+      >
+        <img
+          src="../images/fishMan.png"
+          alt="玩家3"
+          class="fishman-img"
+          loading="lazy"
+        />
+        <span class="fishman-label">玩家 3</span>
+      </div>
+      <div
+        class="fishman-container"
+        data-player="4"
+        style="right: 80px; bottom: 30px"
+      >
+        <img
+          src="../images/fishMan.png"
+          alt="玩家4"
+          class="fishman-img"
+          loading="lazy"
+        />
+        <span class="fishman-label">玩家 4</span>
+      </div>
+      <div
+        class="fishman-container"
+        data-player="5"
+        style="right: 0px; bottom: 30px"
+      >
+        <img
+          src="../images/fishMan.png"
+          alt="玩家5"
+          class="fishman-img"
+          loading="lazy"
+        />
+        <span class="fishman-label">玩家 5</span>
       </div>
     </div>
 
@@ -834,6 +970,98 @@
       const collectionArea = document.getElementById("collection-area");
 
       /**
+       * 初始化 FishMan 拖曳功能
+       */
+      function initFishManDrag() {
+        const fishmen = document.querySelectorAll(".fishman-container");
+
+        fishmen.forEach((fishman) => {
+          let isDragging = false;
+          let startX, startY, initialX, initialY;
+
+          // 滑鼠事件
+          fishman.addEventListener("mousedown", startDrag);
+          document.addEventListener("mousemove", drag);
+          document.addEventListener("mouseup", endDrag);
+
+          // 觸控事件（支援行動裝置）
+          fishman.addEventListener("touchstart", startDrag, { passive: false });
+          document.addEventListener("touchmove", drag, { passive: false });
+          document.addEventListener("touchend", endDrag);
+
+          function startDrag(e) {
+            if (e.target.closest(".fishman-container") !== fishman) return;
+
+            isDragging = true;
+            fishman.classList.add("dragging");
+
+            const rect = fishman.getBoundingClientRect();
+            const clientX =
+              e.type === "touchstart" ? e.touches[0].clientX : e.clientX;
+            const clientY =
+              e.type === "touchstart" ? e.touches[0].clientY : e.clientY;
+
+            startX = clientX;
+            startY = clientY;
+            initialX = rect.left;
+            initialY = rect.top;
+
+            // 拖曳時轉換為 left/top 定位，清除 right/bottom
+            fishman.style.right = "auto";
+            fishman.style.bottom = "auto";
+            fishman.style.left = initialX + "px";
+            fishman.style.top = initialY + "px";
+
+            if (e.type === "touchstart") {
+              e.preventDefault();
+            }
+          }
+
+          function drag(e) {
+            if (!isDragging) return;
+
+            const clientX =
+              e.type === "touchmove" ? e.touches[0].clientX : e.clientX;
+            const clientY =
+              e.type === "touchmove" ? e.touches[0].clientY : e.clientY;
+
+            const deltaX = clientX - startX;
+            const deltaY = clientY - startY;
+
+            const newX = initialX + deltaX;
+            const newY = initialY + deltaY;
+
+            // 限制在遊戲容器內
+            const container = document.querySelector(".game-container");
+            const containerRect = container.getBoundingClientRect();
+            const fishmanRect = fishman.getBoundingClientRect();
+
+            const boundedX = Math.max(
+              0,
+              Math.min(newX, containerRect.width - fishmanRect.width),
+            );
+            const boundedY = Math.max(
+              0,
+              Math.min(newY, containerRect.height - fishmanRect.height),
+            );
+
+            fishman.style.left = boundedX + "px";
+            fishman.style.top = boundedY + "px";
+
+            if (e.type === "touchmove") {
+              e.preventDefault();
+            }
+          }
+
+          function endDrag() {
+            if (!isDragging) return;
+            isDragging = false;
+            fishman.classList.remove("dragging");
+          }
+        });
+      }
+
+      /**
        * 初始化遊戲
        */
       async function init() {
@@ -843,6 +1071,9 @@
             loadFishCards(),
             loadDestinyCards(),
           ]);
+
+          // 初始化 FishMan 拖曳功能
+          initFishManDrag();
 
           // 綁定事件
           fishDeckEl.addEventListener("click", drawFishCard);
