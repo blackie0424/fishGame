@@ -8,17 +8,17 @@
     <style>
       .nav-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 25px;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
         width: 100%;
         max-width: 900px;
-        padding: 20px;
+        padding: 10px;
       }
 
       .nav-card {
         background: var(--color-bg-blue);
         border-radius: var(--radius-md);
-        padding: 30px;
+        padding: 10px;
         text-align: center;
         transition: var(--transition-btn);
         cursor: pointer;
@@ -67,6 +67,12 @@
     <h1 style="margin-bottom: 40px">🎮 Tao Fish Game</h1>
 
     <nav class="nav-grid">
+      <a href="html/game.html" class="nav-card fish">
+        <div class="icon">🎮</div>
+        <h2>線上試玩</h2>
+        <p>可以直接線上體驗遊戲效果</p>
+      </a>
+
       <a href="html/list.html" class="nav-card fish">
         <div class="icon">🐟</div>
         <h2>魚卡圖鑑</h2>
