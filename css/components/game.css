@@ -934,6 +934,48 @@
   border-color: #9b59b6;
 }
 
+/* 漸層背景提高顏色識別度 */
+.fishman-container[data-player="1"] {
+  background: radial-gradient(
+    circle at center,
+    rgba(231, 76, 60, 0.3) 0%,
+    rgba(231, 76, 60, 0.1) 50%,
+    transparent 70%
+  );
+}
+.fishman-container[data-player="2"] {
+  background: radial-gradient(
+    circle at center,
+    rgba(52, 152, 219, 0.3) 0%,
+    rgba(52, 152, 219, 0.1) 50%,
+    transparent 70%
+  );
+}
+.fishman-container[data-player="3"] {
+  background: radial-gradient(
+    circle at center,
+    rgba(46, 204, 113, 0.3) 0%,
+    rgba(46, 204, 113, 0.1) 50%,
+    transparent 70%
+  );
+}
+.fishman-container[data-player="4"] {
+  background: radial-gradient(
+    circle at center,
+    rgba(243, 156, 18, 0.3) 0%,
+    rgba(243, 156, 18, 0.1) 50%,
+    transparent 70%
+  );
+}
+.fishman-container[data-player="5"] {
+  background: radial-gradient(
+    circle at center,
+    rgba(155, 89, 182, 0.3) 0%,
+    rgba(155, 89, 182, 0.1) 50%,
+    transparent 70%
+  );
+}
+
 /* ===== Modal 覆蓋層 ===== */
 .modal-overlay {
   position: fixed;
