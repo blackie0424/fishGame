@@ -1341,8 +1341,12 @@ async function doFishing(p,spot){
   const destiny=await drawDestiny(p);
   if(!destiny.proceed){ return endTurn(); }
   // ---- 階段二：拉竿卡 ----
-  if(!G.actionDeck.length) G.actionDeck=buildActionDeck();
-  const card=G.actionDeck.pop();
+  // 單鈎命運時，跳過「雙鈎」行動卡，避免情境矛盾
+  let card;
+  do {
+    if(!G.actionDeck.length) G.actionDeck=buildActionDeck();
+    card=G.actionDeck.pop();
+  } while(!destiny.flags.double && card==="double");
   // 語境切換：魚已上鉤（命運中魚/吞鉤/雙鉤）時使用收線階段的敘述，避免「餌才掉」等矛盾
   const info=(destiny.flags.hooked&&ACTION_INFO[card].hooked)?ACTION_INFO[card].hooked:ACTION_INFO[card];
   addLog(`${p.name} 在${ZONE_NAME[spot]}拉竿，抽到「${info.title}」。`);
@@ -1384,9 +1388,7 @@ async function doFishing(p,spot){
       break;
     }
     case "hit": case "double":{
-      // 行動卡「雙鈎」只有在命運卡為「雙鈎中魚」時才能拉 2 條；
-      // 命運為一般中魚時鈎上只有 1 條魚，雙鈎行動降格為單拉
-      const take=card==="double"&&destiny.flags.double?2:1;
+      const take=card==="double"?2:1;
       if(!G.spots[spot].length){ await toast("這片水域沒有魚⋯"); addLog(`${p.name} 的水域空空如也。`,"lg-bad"); break; }
       const wantN=Math.min(2, take + (destiny.flags.double?1:0));   // 上限 2 條
       const got=[];
