@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\AuthController;
+use App\Http\Controllers\Admin\FishImageAnalyzerController;
 use App\Http\Controllers\GameConfigController;
 use Illuminate\Support\Facades\Route;
 
@@ -17,6 +18,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
     Route::middleware('admin.auth')->group(function () {
         Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
+        Route::post('fish/analyze-image', [FishImageAnalyzerController::class, 'analyze'])->name('fish.analyze');
         Route::get('{entity}', [AdminController::class, 'index'])->name('index');
         Route::get('{entity}/create', [AdminController::class, 'edit'])->name('create');
         Route::get('{entity}/{id}/edit', [AdminController::class, 'edit'])->name('edit');

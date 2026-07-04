@@ -43,7 +43,7 @@ code{color:#8fd3e8;word-break:break-all;}
 </header>
 <nav>
   <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard')?'on':'' }}">總覽</a>
-  @foreach(\App\Http\Controllers\Admin\AdminController::registry() as $key => $cfg)
+  @foreach(\App\Admin\EntityRegistry::all() as $key => $cfg)
     <a href="{{ route('admin.index',$key) }}" class="{{ request()->route('entity')===$key?'on':'' }}">{{ $cfg['label'] }}</a>
   @endforeach
 </nav>
@@ -52,5 +52,6 @@ code{color:#8fd3e8;word-break:break-all;}
   @if($errors->any())<div class="err">{{ implode('、',$errors->all()) }}</div>@endif
   @yield('content')
 </main>
+@stack('scripts')
 </body>
 </html>

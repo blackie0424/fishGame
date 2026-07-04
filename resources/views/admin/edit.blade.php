@@ -18,7 +18,22 @@
         @endforeach
       </select>
     @elseif($f['type']==='json')
-      <textarea name="{{ $name }}">{{ is_string($val)?$val:(is_null($val)?'':json_encode($val, JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT)) }}</textarea>
+      @if($entity==='fish' && $name==='art')
+        <div style="border:1px solid #ccc;border-radius:6px;padding:12px;margin-bottom:8px;background:#f9f9f9;">
+          <strong>AI 分析魚類照片</strong>
+          <div style="margin-top:8px;">
+            <label style="font-weight:normal;">上傳魚類圖片（jpg/png，最大 5MB）</label>
+            <input type="file" id="fish-image-input" accept="image/*" style="display:block;margin-top:4px;">
+          </div>
+          <div style="margin-top:8px;">
+            <label style="font-weight:normal;">補充說明（選填）</label>
+            <textarea id="fish-image-desc" rows="2" maxlength="500" placeholder="如：背鰭明顯、有橫紋、尾鰭偏黃…" style="display:block;width:100%;margin-top:4px;"></textarea>
+          </div>
+          <button type="button" id="fish-analyze-btn" style="margin-top:8px;">AI 分析照片</button>
+          <span id="fish-analyze-status" style="margin-left:8px;color:#666;font-size:0.9em;"></span>
+        </div>
+      @endif
+      <textarea name="{{ $name }}" id="{{ $entity==='fish'&&$name==='art' ? 'fish-art-textarea' : '' }}">{{ is_string($val)?$val:(is_null($val)?'':json_encode($val, JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT)) }}</textarea>
     @elseif($f['type']==='number')
       <input type="number" step="any" name="{{ $name }}" value="{{ $val }}">
     @else
@@ -30,4 +45,57 @@
     <a class="btn red" href="{{ route('admin.index',$entity) }}">取消</a>
   </div>
 </form>
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const btn = document.getElementById('fish-analyze-btn');
+  if (!btn) return;
+
+  btn.addEventListener('click', function () {
+    const fileInput = document.getElementById('fish-image-input');
+    const descInput = document.getElementById('fish-image-desc');
+    const status    = document.getElementById('fish-analyze-status');
+    const textarea  = document.getElementById('fish-art-textarea');
+
+    if (!fileInput.files[0]) {
+      status.textContent = '請先選擇圖片。';
+      status.style.color = '#c00';
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('image', fileInput.files[0]);
+    formData.append('description', descInput.value);
+    formData.append('_token', '{{ csrf_token() }}');
+
+    btn.disabled = true;
+    status.textContent = '分析中…';
+    status.style.color = '#666';
+
+    fetch('{{ route('admin.fish.analyze') }}', {
+      method: 'POST',
+      body: formData,
+    })
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        if (data.art) {
+          textarea.value = JSON.stringify(data.art, null, 2);
+          status.textContent = '分析完成，請確認並調整後儲存。';
+          status.style.color = '#060';
+        } else {
+          status.textContent = data.error || '分析失敗，請重試。';
+          status.style.color = '#c00';
+        }
+      })
+      .catch(function () {
+        status.textContent = '網路錯誤，請重試。';
+        status.style.color = '#c00';
+      })
+      .finally(function () {
+        btn.disabled = false;
+      });
+  });
+});
+</script>
+@endpush
 @endsection
