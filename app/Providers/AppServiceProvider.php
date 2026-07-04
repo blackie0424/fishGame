@@ -2,23 +2,19 @@
 
 namespace App\Providers;
 
+use App\Contracts\GameConfigRepositoryInterface;
+use App\Repositories\EloquentGameConfigRepository;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
-        //
+        $this->app->bind(
+            GameConfigRepositoryInterface::class,
+            EloquentGameConfigRepository::class
+        );
     }
 
-    /**
-     * Bootstrap any application services.
-     */
-    public function boot(): void
-    {
-        //
-    }
+    public function boot(): void {}
 }
