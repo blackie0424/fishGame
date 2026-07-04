@@ -166,7 +166,7 @@ const G={
   busy:false, over:false,
 };
 let speciesByName={};
-function rebuildSpeciesIndex(){ speciesByName={}; FISH_SPECIES.forEach(sp=>speciesByName[sp[0]]=sp); }
+function rebuildSpeciesIndex(){ speciesByName={}; FISH_SPECIES.forEach(sp=>speciesByName[sp.name]=sp); }
 rebuildSpeciesIndex();
 
 /* 依難度分桶補魚：點位 s 優先抽 difficulty≈s 的魚 */
