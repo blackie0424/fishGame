@@ -1384,9 +1384,11 @@ async function doFishing(p,spot){
       break;
     }
     case "hit": case "double":{
-      const take=card==="double"?2:1;
+      // 行動卡「雙鈎」只有在命運卡為「雙鈎中魚」時才能拉 2 條；
+      // 命運為一般中魚時鈎上只有 1 條魚，雙鈎行動降格為單拉
+      const take=card==="double"&&destiny.flags.double?2:1;
       if(!G.spots[spot].length){ await toast("這片水域沒有魚⋯"); addLog(`${p.name} 的水域空空如也。`,"lg-bad"); break; }
-      const wantN=Math.min(2, take + (destiny.flags.double?1:0));   // 上限 2 條：雙鉤命運不與雙鉤行動卡疊加至 3
+      const wantN=Math.min(2, take + (destiny.flags.double?1:0));   // 上限 2 條
       const got=[];
       for(let k=0;k<wantN;k++){
         let src=spot;
