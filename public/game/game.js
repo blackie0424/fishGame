@@ -1386,7 +1386,7 @@ async function doFishing(p,spot){
     case "hit": case "double":{
       const take=card==="double"?2:1;
       if(!G.spots[spot].length){ await toast("這片水域沒有魚⋯"); addLog(`${p.name} 的水域空空如也。`,"lg-bad"); break; }
-      const wantN=Math.min(3, take + (destiny.flags.double?1:0));   // 拉竿雙鉤 + 命運雙鉤可疊加
+      const wantN=Math.min(2, take + (destiny.flags.double?1:0));   // 上限 2 條：雙鉤命運不與雙鉤行動卡疊加至 3
       const got=[];
       for(let k=0;k<wantN;k++){
         let src=spot;
@@ -1410,7 +1410,7 @@ async function doFishing(p,spot){
             await toast(`🎲 ${roll} 點⋯${f.name} 掙脫了`);
           }
         }
-        if(got.length>=take+(destiny.flags.double?1:0)) break;
+        if(got.length>=wantN) break;
       }
       if(got.length){
         got.forEach(f=>p.catch.push(f));            // ★ 實際入袋：全體/個人/水窪同步反映
