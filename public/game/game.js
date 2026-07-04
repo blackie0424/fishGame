@@ -9,6 +9,10 @@ import { ROLES } from './data/roles.js';
 import { ACTION_MIX, ACTION_INFO, DESTINY_CARDS, DESTINY_MIX, ENV_COUNTS, ENV_INFO } from './data/cards.js';
 import { shuffle, rnd, buildFishSupply, buildActionDeck, buildDestinyDeck, buildEnvDeck } from './utils/deck.js';
 import { siteTier, fishPass, fishAuto, fishNeedText } from './utils/rules.js';
+import { FISH_ART } from './data/fishArt.js';
+import { drawFish, drawAvatar, getFishArt, drawPixFisher } from './renderer/sprites.js';
+import { drawSeaBands, drawFishShadow, drawRockRight, tickDrops } from './renderer/scene.js';
+import { createGameState, advanceTurn } from './state/GameState.js';
 
 /* ---------------- 動態遊戲參數（可由 Laravel 後台調整） ---------------- */
 let CFG={rounds:15, goal:21, randomFishRatio:.35, bgmSpeedRound:10};
@@ -144,126 +148,7 @@ const SFX=(()=>{
 /* =====================================================================
    像素魚繪製（程序化 sprite，依魚種色盤 + 名稱種子花紋）
 ===================================================================== */
-/* 依 images/removebg 實際魚照設計：體型 shape、花紋 pattern、配色皆對應特徵 */
-let FISH_ART={
-  //           shape   body      belly     accent    pattern   特徵
-  Acyod:    {shape:"deep", body:"#d9402f", belly:"#f2a08a", acc:"#7a1512", pat:"plain",  bigEye:true},  // 鮮紅、大眼
-  Amingang: {shape:"long", body:"#b8c4cc", belly:"#eef2f5", acc:"#5a7a8c", pat:"hline"},                // 銀亮長身
-  Angsa:    {shape:"deep", body:"#aab4bd", belly:"#e2e8ec", acc:"#6a757e", pat:"plain"},                // 銀灰高身
-  Anid:     {shape:"deep", body:"#4a4f55", belly:"#8a9096", acc:"#26292d", pat:"plain"},                // 深灰黑、高背
-  Arawa:    {shape:"long", body:"#c0ccd4", belly:"#f0f4f7", acc:"#607a88", pat:"hline"},                // 細長銀白
-  Cilat:    {shape:"deep", body:"#c8d2da", belly:"#f2f5f8", acc:"#7f8fa2", pat:"plain"},                // 銀白高身
-  Cirow:    {shape:"oval", body:"#c9a05f", belly:"#ecd9ad", acc:"#8a6a30", pat:"spots"},                // 黃褐帶斑
-  Ilek:     {shape:"oval", body:"#b8a94c", belly:"#e6dfa8", acc:"#6f6524", pat:"spots"},                // 橄欖金、細斑
-  Kosikosi: {shape:"oval", body:"#e8d9a0", belly:"#f7f0d0", acc:"#26262a", pat:"bars"},                 // 黑色縱帶
-  Kowaos:   {shape:"long", body:"#9aa8b0", belly:"#d8dee2", acc:"#556570", pat:"hline"},                // 灰銀長身
-  Kozapo:   {shape:"oval", body:"#8a4a3a", belly:"#c99a80", acc:"#54291f", pat:"spots"},                // 紅褐石斑紋
-  Lagarow:  {shape:"long", body:"#a8b0b5", belly:"#dde2e5", acc:"#666e73", pat:"plain"},                // 灰銀
-  Lalavok:  {shape:"oval", body:"#c5ced6", belly:"#f2f5f8", acc:"#8a99a5", pat:"plain", tail:"#d9c05f"},// 銀白黃尾
-  Mahabteng:{shape:"oval", body:"#4f3a30", belly:"#8a6f60", acc:"#f0e8d8", pat:"spots"},                // 深褐白斑
-  Malan:    {shape:"oval", body:"#7a8fa0", belly:"#c2cfd8", acc:"#46596a", pat:"plain"},                // 藍灰
-  Savali:   {shape:"long", body:"#bcc8d0", belly:"#f0f4f6", acc:"#46565f", pat:"hline"},                // 銀色細長
-  Takazit:  {shape:"oval", body:"#b0a288", belly:"#e2d9c5", acc:"#6f6248", pat:"plain"},                // 古銅銀
-  Tangara:  {shape:"oval", body:"#d97a70", belly:"#f2c5bd", acc:"#a03a30", pat:"plain", bigEye:true},   // 粉紅、大眼
-  Tapez:    {shape:"deep", body:"#b5bec8", belly:"#e8edf2", acc:"#6a7684", pat:"plain", tail:"#d9b84c"},// 銀身黃鰭
-  Veras:    {shape:"oval", body:"#3a5a7a", belly:"#a8c2d8", acc:"#1c344c", pat:"plain", wings:true},    // 深藍、大胸鰭（飛魚型）
-};
-function drawFish(canvas,species,scale){
-  const [name,,diff]=species;
-  const A=FISH_ART[name]||{shape:"oval",body:"#7fb2c9",belly:"#d8e8ef",acc:"#4a7f97",pat:"plain"};
-  const W=18,H=12, s=scale;
-  canvas.width=W*s; canvas.height=H*s;
-  const g=canvas.getContext("2d"); g.imageSmoothingEnabled=false;
-  const px=(x,y,c)=>{g.fillStyle=c; g.fillRect(x*s,y*s,s,s);};
-  const cy0=5.5;
-  const dims=A.shape==="long"?{rx:6.8,ry:2.3,x0:3,x1:17}
-            :A.shape==="deep"?{rx:5.0,ry:4.3,x0:4,x1:15}
-            :{rx:5.6,ry:3.3,x0:4,x1:16};
-  const cx0=(dims.x0+dims.x1)/2;
-  const inBody=(x,y)=>{const dx=(x-cx0)/dims.rx, dy=(y-cy0)/dims.ry; return x>=dims.x0&&x<=dims.x1&&dx*dx+dy*dy<=1;};
-  // 身體與腹部
-  for(let y=0;y<H;y++)for(let x=0;x<W;x++) if(inBody(x,y)) px(x,y, y>cy0+dims.ry*.35?A.belly:A.body);
-  // 尾鰭（分叉）
-  const tc=A.tail||A.acc;
-  for(let k=0;k<3;k++){ px(dims.x0-1-k,Math.round(cy0-1-k*.8),tc); px(dims.x0-1-k,Math.round(cy0+1+k*.8),tc); }
-  px(dims.x0-1,Math.round(cy0),A.body);
-  // 背鰭 / 腹鰭
-  const topY=Math.ceil(cy0-dims.ry);
-  for(let x=Math.round(cx0-3);x<=Math.round(cx0+2);x++) px(x,topY-1,A.tail||A.acc);
-  px(Math.round(cx0-1),Math.floor(cy0+dims.ry)+1,A.tail||A.acc);
-  // 飛魚大胸鰭
-  if(A.wings){ for(let k=0;k<5;k++){ px(Math.round(cx0-1-k),topY-1-Math.floor(k*.7),A.belly); px(Math.round(cx0-k),topY-Math.floor(k*.7),A.acc); } }
-  // 花紋
-  if(A.pat==="bars"){ for(const bx of [-3,-1,1,3]){ const x=Math.round(cx0+bx);
-      for(let y=0;y<H;y++) if(inBody(x,y)) px(x,y,A.acc); } }
-  else if(A.pat==="spots"){ const seed=name.length*7;
-      for(let i=0;i<7;i++){ const x=dims.x0+1+((seed*(i+3))%(dims.x1-dims.x0-2)), y=2+((seed*(i+5))%(Math.floor(dims.ry*2)));
-        if(inBody(x,y)) px(x,y,A.acc); } }
-  else if(A.pat==="hline"){ for(let x=dims.x0;x<=dims.x1-2;x++) if(inBody(x,Math.round(cy0-1))) px(x,Math.round(cy0-1),A.acc); }
-  // 眼睛（大眼魚更大）與嘴
-  const ex=dims.x1-2;
-  if(A.bigEye){ px(ex,4,"#fff"); px(ex-1,4,"#fff"); px(ex,5,"#fff"); px(ex-1,5,"#101010"); }
-  else{ px(ex,4,"#101010"); px(ex+ (dims.x1<17?0:0),4,"#101010"); px(ex,3,"#fff"); }
-  px(dims.x1,Math.round(cy0),A.acc);
-  // 珍稀魚金光
-  if(diff>=5){ g.fillStyle="rgba(245,197,66,.9)"; for(let x=dims.x0;x<=dims.x1;x++) g.fillRect(x*s,(topY-2)*s+1,s,2); }
-  canvas.title=name;
-}
 function fishCanvas(species,scale){ const c=document.createElement("canvas"); drawFish(c,species,scale); return c; }
-
-/* 像素小人（角色頭像）：依身份特徵繪製，五位角色一眼可辨 */
-function drawAvatar(canvas,role,scale){
-  const s2=scale, W=12, H=14; canvas.width=W*s2; canvas.height=H*s2;
-  const g=canvas.getContext("2d"); g.imageSmoothingEnabled=false;
-  const px=(x,y,c)=>{g.fillStyle=c; g.fillRect(x*s2,y*s2,s2,s2);};
-  const id=role.id;
-  if(id===0){ // 小孩：個子小、西瓜皮髮型、大眼、短褲，拿小魚竿
-    for(let x=3;x<=8;x++){ px(x,3,"#1a1a1a"); } px(3,4,"#1a1a1a"); px(8,4,"#1a1a1a");
-    for(let y=4;y<=6;y++)for(let x=4;x<=7;x++) px(x,y,role.skin);
-    px(4,5,"#101010"); px(7,5,"#101010"); px(5,6,"#8a4a3a"); px(6,6,"#8a4a3a");
-    for(let y=7;y<=9;y++)for(let x=3;x<=8;x++) px(x,y,role.cloth);   // 上衣
-    px(3,10,"#2a3d55"); px(4,10,"#2a3d55"); px(7,10,"#2a3d55"); px(8,10,"#2a3d55"); // 短褲
-    px(4,11,role.skin); px(4,12,role.skin); px(7,11,role.skin); px(7,12,role.skin);
-    px(9,7,"#8a5c2d"); px(10,6,"#8a5c2d");                            // 小魚竿
-  }else if(id===1){ // 成年男子：紅頭巾、寬肩結實、紅背心
-    for(let x=3;x<=8;x++) px(x,1,"#c1272d");                          // 頭巾
-    for(let x=3;x<=8;x++) px(x,0,"#1a1a1a");
-    for(let y=2;y<=5;y++)for(let x=3;x<=8;x++) px(x,y,role.skin);
-    px(4,3,"#101010"); px(7,3,"#101010"); px(5,5,"#8a4a3a"); px(6,5,"#8a4a3a");
-    for(let y=6;y<=10;y++)for(let x=2;x<=9;x++) px(x,y,role.cloth);   // 寬肩身
-    px(1,6,role.skin); px(1,7,role.skin); px(10,6,role.skin); px(10,7,role.skin); // 手臂肌肉
-    for(let x=2;x<=9;x++) px(x,8,"#f2ede2");                          // 白紋
-    px(3,11,role.skin); px(3,12,role.skin); px(8,11,role.skin); px(8,12,role.skin);
-    px(10,4,"#8a5c2d"); px(11,3,"#8a5c2d");
-  }else if(id===2){ // 結婚的男人：髮髻、貝殼項鍊、綠衣
-    for(let x=3;x<=8;x++) px(x,1,"#1a1a1a"); px(5,0,"#1a1a1a"); px(6,0,"#1a1a1a"); // 髮髻
-    for(let y=2;y<=5;y++)for(let x=3;x<=8;x++) px(x,y,role.skin);
-    px(4,3,"#101010"); px(7,3,"#101010"); px(5,5,"#8a4a3a"); px(6,5,"#8a4a3a");
-    for(let y=6;y<=10;y++)for(let x=2;x<=9;x++) px(x,y,role.cloth);
-    px(4,6,"#f7f3e8"); px(6,7,"#f7f3e8"); px(8,6,"#f7f3e8");           // 貝殼項鍊
-    px(3,11,role.skin); px(3,12,role.skin); px(8,11,role.skin); px(8,12,role.skin);
-    px(10,5,"#8a5c2d"); px(11,4,"#8a5c2d");
-  }else if(id===3){ // 有小孩的爸爸：短鬚、胸前揹著小嬰兒、褐衣
-    for(let x=3;x<=8;x++) px(x,1,"#1a1a1a"); px(2,2,"#1a1a1a"); px(9,2,"#1a1a1a");
-    for(let y=2;y<=5;y++)for(let x=3;x<=8;x++) px(x,y,role.skin);
-    px(4,3,"#101010"); px(7,3,"#101010");
-    px(4,5,"#3a2d24"); px(5,5,"#3a2d24"); px(6,5,"#3a2d24"); px(7,5,"#3a2d24"); // 鬍渣
-    for(let y=6;y<=10;y++)for(let x=2;x<=9;x++) px(x,y,role.cloth);
-    // 胸前的小嬰兒
-    px(4,7,"#f0c8a0"); px(5,7,"#f0c8a0"); px(4,6,"#1a1a1a"); px(5,6,"#1a1a1a");
-    px(3,8,"#e8dcc8"); px(4,8,"#e8dcc8"); px(5,8,"#e8dcc8"); px(6,8,"#e8dcc8"); // 揹帶
-    px(3,11,role.skin); px(3,12,role.skin); px(8,11,role.skin); px(8,12,role.skin);
-    px(10,5,"#8a5c2d"); px(11,4,"#8a5c2d");
-  }else{ // 阿公：白髮白鬚、微駝、拄著木杖
-    for(let x=3;x<=8;x++) px(x,1,"#e8e8e8"); px(2,2,"#e8e8e8"); px(9,2,"#e8e8e8"); // 白髮
-    for(let y=2;y<=5;y++)for(let x=3;x<=8;x++) px(x,y,role.skin);
-    px(4,3,"#101010"); px(7,3,"#101010");
-    for(let x=4;x<=7;x++){ px(x,5,"#e8e8e8"); px(x,6,"#e8e8e8"); }     // 白鬍子
-    for(let y=7;y<=10;y++)for(let x=3;x<=9;x++) px(x,y,role.cloth);    // 微駝的身
-    px(3,11,role.skin); px(3,12,role.skin); px(8,11,role.skin); px(8,12,role.skin);
-    px(10,7,"#6a4a2a"); px(10,8,"#6a4a2a"); px(10,9,"#6a4a2a"); px(10,10,"#6a4a2a"); px(10,11,"#6a4a2a"); // 木杖
-  }
-}
 function avatarCanvas(role,scale){ const c=document.createElement("canvas"); drawAvatar(c,role,scale); return c; }
 
 /* =====================================================================
@@ -448,33 +333,6 @@ function syncShadows(){
 let SPOT_POS=[[.13,.665],[.375,.695],[.615,.655],[.235,.475],[.50,.435],[.765,.41]]; // [x,y] 比例；越深越遠
 const FISHERS=[]; // {x,gy,phase,t,spot,name,bobX,bobY}
 
-function drawPixFisher(g,x,gy,rodAng,lean,active,name,walkFrame,st){
-  // 側面小人（面向海）；st：角色外觀 {skin,cloth,hair,beard,u(體型),cane}
-  st=st||{skin:"#d8a878",cloth:"#1a1512",hair:"#12100e",u:4};
-  const u=st.u||4;
-  g.fillStyle=st.skin;  g.fillRect(x-lean,gy-13*u,3*u,3*u);          // 臉
-  g.fillStyle=st.hair;  g.fillRect(x-lean,gy-13*u,3*u,u);            // 髮/頭巾
-  if(st.beard){ g.fillStyle="#e8e8e8"; g.fillRect(x-lean,gy-10.6*u,3*u,.8*u); } // 阿公白鬚
-  g.fillStyle="#101010"; g.fillRect(x-lean+.4*u,gy-12*u,.7*u,.7*u);  // 眼
-  g.fillStyle=st.cloth; g.fillRect(x-lean*.6,gy-10*u,3.2*u,6*u);     // 身（角色服色）
-  if(st.baby){ g.fillStyle="#f0c8a0"; g.fillRect(x-lean*.6-.8*u,gy-9*u,u,u);
-               g.fillStyle="#1a1a1a"; g.fillRect(x-lean*.6-.8*u,gy-9.8*u,u,.8*u); } // 爸爸胸前嬰兒
-  if(st.cane){ g.fillStyle="#6a4a2a"; g.fillRect(x+3.4*u,gy-6*u,.8*u,6*u); }        // 阿公木杖
-  const step=walkFrame?Math.sin(walkFrame*.5)*u:0;                   // 踏步
-  g.fillStyle="#20232a";
-  g.fillRect(x+.2*u,gy-4*u+Math.max(0,-step)*.4,u,4*u-Math.abs(step)*.5);
-  g.fillRect(x+2*u,gy-4*u+Math.max(0,step)*.4,u,4*u-Math.abs(step)*.5);
-  const hx=x-lean*.8, hy=gy-8*u, rodLen=17*u;
-  const tipX=hx-Math.cos(rodAng)*rodLen, tipY=hy-Math.sin(rodAng)*rodLen;
-  if(!st.noRod){
-    g.strokeStyle="#241c14"; g.lineWidth=3;
-    g.beginPath(); g.moveTo(hx,hy);
-    g.quadraticCurveTo((hx+tipX)/2,(hy+tipY)/2-4,tipX,tipY); g.stroke();
-  }
-  if(active){ g.fillStyle="#f5c542"; g.beginPath(); g.moveTo(x+1.5*u,gy-17*u); g.lineTo(x-.5*u,gy-20*u); g.lineTo(x+3.5*u,gy-20*u); g.fill(); }
-  if(name){ g.fillStyle="rgba(242,237,226,.9)"; g.font="bold 10px monospace"; g.textAlign="center"; g.fillText(name.slice(0,6),x+1.5*u,gy+12); g.textAlign="left"; }
-  return {tipX,tipY,hx,hy};
-}
 
 function shoreScene(canvas,opts={}){
   const g=canvas.getContext("2d"); g.imageSmoothingEnabled=false;
@@ -977,17 +835,13 @@ const AI_NAMES=["Si Manok","Si Vakong","Si Ngalolog","Si Kalaw"];
 async function launchGame(){
   SFX.init(); SFX.splash();
   await playIntro();
-  G.players=[]; G.round=1; G.turnIdx=0; G.over=false; G.busy=false;
-  G.site=SITE_CARDS[G.siteIdx];
-  G.fishSupply=buildFishSupply();
-  G.actionDeck=buildActionDeck(G.site);
-  G.envDeck=buildEnvDeck();
-  G.spots=[[],[],[],[],[],[]];
   // 角色分配
+  const site=SITE_CARDS[G.siteIdx];
   let pool=ROLES.map(r=>r.id).filter(id=>id!==G.humanRole);
   pool=shuffle(pool);
   const nm=playerNames();
   let aiIdx=0;
+  const playerData=[];
   for(let i=0;i<G.count;i++){
     // 多人模式：有填名字＝真人；留空＝電腦代打（第 1 位固定真人）
     const human = G.mode==="hotseat" ? (i===0 || !!nm[i]) : i===0;
@@ -995,8 +849,13 @@ async function launchGame(){
     let name;
     if(G.mode==="hotseat") name = nm[i] || (i===0?"玩家 1":`🤖 ${AI_NAMES[aiIdx++]}`);
     else name = i===0 ? (nm[0]||"你") : AI_NAMES[aiIdx++];
-    G.players.push({ idx:i, human, name, role:ROLES[roleId], catch:[], rest:0 });
+    playerData.push({ name, human, role:ROLES[roleId] });
   }
+  Object.assign(G, createGameState({ site, players: playerData }), {
+    actionDeck: buildActionDeck(site),
+    envDeck: buildEnvDeck(),
+    busy: false,
+  });
   refillSpots();
   // 岸上小人 = 每位玩家（沿著礁岩排開）
   FISHERS.length=0;
@@ -1297,20 +1156,14 @@ function envAnim(type){
   const W=cv.width,H=cv.height;
   let t=0, alive=true;
   const drops=[];
-  function sea(level){ // level: 水面高度比例（遠深近淺）
+  function sea(level){
     const wy=H*level;
-    g.fillStyle="#3f6f9e"; g.fillRect(0,0,W,wy);
-    const bands=["#11497b","#1b6bad","#2b93d6"]; const bh=(H-wy)/bands.length;
-    bands.forEach((c,i)=>{g.fillStyle=c; g.fillRect(0,wy+i*bh,W,bh+2);});
+    drawSeaBands(g,W,H,wy);
     g.fillStyle="rgba(255,255,255,.28)";
     for(let i=0;i<7;i++) g.fillRect((i*47+t*1.4)%(W+30)-15, wy+4+(i*17)%(H-wy-8), 9,2);
     return wy;
   }
-  function fishShadow(x,y,dir,c="rgba(6,20,36,.8)"){
-    g.fillStyle=c;
-    g.beginPath(); g.ellipse(x,y,8,3.4,0,0,7); g.fill();
-    g.beginPath(); g.moveTo(x-dir*7,y); g.lineTo(x-dir*12,y-3); g.lineTo(x-dir*12,y+3); g.fill();
-  }
+  const fishShadow=(x,y,dir,c)=>drawFishShadow(g,x,y,dir,c);
   function sitter(x,gy,flip){
     const u=3,d=flip?-1:1;
     g.fillStyle="#12100e"; g.fillRect(x,gy-8*u,3*u,3*u);
@@ -1422,10 +1275,7 @@ function envAnim(type){
       g.fillStyle="rgba(255,255,255,.9)";
       for(let i=0;i<3;i++) if((t/16|0)%4>i) g.fillRect(W*.44+i*7,H-52-i*5,4,4);
     }
-    // 粒子
-    g.fillStyle="#cfeefb";
-    for(let i=drops.length-1;i>=0;i--){ const d=drops[i]; d.l++; d.x+=d.vx; d.y+=d.vy; d.vy+=.25;
-      if(d.l<20) g.fillRect(d.x,d.y,3,3); else drops.splice(i,1); }
+    tickDrops(g,drops);
     t++; requestAnimationFrame(loop);
   }
   loop();
@@ -1439,12 +1289,10 @@ function destinyAnim(t){
   let tt=0, alive=true; const drops=[];
   function base(rockRight=true){
     const wy=H*.40;
-    g.fillStyle="#3f6f9e"; g.fillRect(0,0,W,wy);
-    const bands=["#11497b","#1b6bad","#2b93d6"]; const bh=(H-wy)/3;
-    bands.forEach((c,i)=>{g.fillStyle=c; g.fillRect(0,wy+i*bh,W,bh+2);});
+    drawSeaBands(g,W,H,wy);
     g.fillStyle="rgba(255,255,255,.25)";
     for(let i=0;i<6;i++) g.fillRect((i*43+tt*1.3)%(W+30)-15, wy+5+(i*15)%(H-wy-10), 9,2);
-    if(rockRight){ g.fillStyle="#4e4a44"; g.fillRect(W*.66,H*.62,W,H); g.fillStyle="#6b6558"; g.fillRect(W*.66,H*.62,W*.34,4); }
+    if(rockRight) drawRockRight(g,W,H);
     return wy;
   }
   function angler(x,gy,rodAng,lean=1){
@@ -1453,9 +1301,7 @@ function destinyAnim(t){
   }
   function bob(x,y){ g.fillStyle="#f2ede2"; g.fillRect(x-2,y-2,5,5); }
   function excl(x,y,c="#f5c542"){ g.fillStyle=c; g.fillRect(x,y,4,10); g.fillRect(x,y+13,4,4); }
-  function fishS(x,y,dir,c="rgba(6,20,36,.85)"){ g.fillStyle=c;
-    g.beginPath(); g.ellipse(x,y,9,4,0,0,7); g.fill();
-    g.beginPath(); g.moveTo(x-dir*8,y); g.lineTo(x-dir*13,y-4); g.lineTo(x-dir*13,y+4); g.fill(); }
+  const fishS=(x,y,dir,c)=>drawFishShadow(g,x,y,dir,c);
   function loop(){
     if(!alive) return;
     g.clearRect(0,0,W,H);
@@ -1571,10 +1417,7 @@ function destinyAnim(t){
         fishS(fx-24,by+20,-1);
       }
     }
-    // 粒子
-    g.fillStyle="#cfeefb";
-    for(let i=drops.length-1;i>=0;i--){ const d=drops[i]; d.l++; d.x+=d.vx; d.y+=d.vy; d.vy+=.25;
-      if(d.l<20) g.fillRect(d.x,d.y,3,3); else drops.splice(i,1); }
+    tickDrops(g,drops);
     tt++; requestAnimationFrame(loop);
   }
   loop();
@@ -1633,9 +1476,7 @@ function startFight(style){
   function loop(){
     if(!st.alive) return;
     // 海與礁岩
-    const sea=["#11497b","#1b6bad","#2b93d6"]; const bh=(H-waterY)/sea.length; // 遠深近淺
-    g.fillStyle="#3f6f9e"; g.fillRect(0,0,W,waterY);
-    sea.forEach((c,i)=>{g.fillStyle=c; g.fillRect(0,waterY+i*bh,W,bh+2);});
+    drawSeaBands(g,W,H,waterY);;
     g.fillStyle="#4e4a44"; g.fillRect(rockX-14,waterY+20,W,H);
     g.fillStyle="#66604f"; g.fillRect(rockX-24,waterY+14,W,12);
     // 拉扯相位
@@ -1794,9 +1635,9 @@ async function endTurn(){
   const cv0=$("#sea-canvas"); cv0.onclick=null; cv0.style.cursor="";
   resetFisher(G.turnIdx);   // 收竿回待機
   renderPlayers(); renderSpots();
-  G.turnIdx++;
-  if(G.turnIdx>=G.players.length){
-    G.turnIdx=0;
+  const next=advanceTurn(G);
+  G.turnIdx=next.turnIdx;
+  if(next.round>G.round){
     await roundEnd();
     if(G.over) return;
   }
@@ -2026,27 +1867,33 @@ async function finishGame(){
 function applyServerConfig(cfg){
   try{
     if(cfg.fish&&cfg.fish.length){
-      FISH_SPECIES=cfg.fish.map(f=>[f.name,f.card_count,f.difficulty,f.category,["#7fb2c9","#d8e8ef","#4a7f97"]]);
-      FISH_ART={};
+      FISH_SPECIES.length=0;
+      FISH_SPECIES.push(...cfg.fish.map(f=>[f.name,f.card_count,f.difficulty,f.category,["#7fb2c9","#d8e8ef","#4a7f97"]]));
+      Object.keys(FISH_ART).forEach(k=>delete FISH_ART[k]);
       cfg.fish.forEach(f=>{ FISH_ART[f.name]=Object.assign({shape:"oval",pat:"plain"},f.art||{}); });
       rebuildSpeciesIndex();
     }
     if(cfg.roles&&cfg.roles.length){
-      ROLES=cfg.roles.map((r,i)=>({id:i,name:r.name,emoji:r.emoji||"🧑",need:r.need,
-        target:r.targets&&r.targets.length?r.targets:null,desc:r.description,skin:r.skin,cloth:r.cloth}));
-      TARGET_SET=new Set([].concat(...cfg.roles.map(r=>r.targets||[])));
+      ROLES.length=0;
+      ROLES.push(...cfg.roles.map((r,i)=>({id:i,name:r.name,emoji:r.emoji||"🧑",need:r.need,
+        target:r.targets&&r.targets.length?r.targets:null,desc:r.description,skin:r.skin,cloth:r.cloth})));
+      TARGET_SET.clear();
+      [].concat(...cfg.roles.map(r=>r.targets||[])).forEach(t=>TARGET_SET.add(t));
     }
     if(cfg.sites&&cfg.sites.length){
-      SITE_CARDS=cfg.sites.map(sc=>({name:sc.name,rule:sc.rule,banned:sc.banned||[],
-        total:sc.board_total,desc:sc.description,vis:sc.vis||{wave:0,rock:1,cur:0}}));
+      SITE_CARDS.length=0;
+      SITE_CARDS.push(...cfg.sites.map(sc=>({name:sc.name,rule:sc.rule,banned:sc.banned||[],
+        total:sc.board_total,desc:sc.description,vis:sc.vis||{wave:0,rock:1,cur:0}})));
     }
     if(cfg.destiny&&cfg.destiny.length){
-      DESTINY_CARDS=cfg.destiny.map(d=>({t:d.key,n:0,title:d.title,content:d.content,result:d.result,kind:d.kind}));
-      DESTINY_MIX={low:{},mid:{},high:{}};
+      DESTINY_CARDS.length=0;
+      DESTINY_CARDS.push(...cfg.destiny.map(d=>({t:d.key,n:0,title:d.title,content:d.content,result:d.result,kind:d.kind})));
+      DESTINY_MIX.low={}; DESTINY_MIX.mid={}; DESTINY_MIX.high={};
       cfg.destiny.forEach(d=>{ DESTINY_MIX.low[d.key]=d.count_low; DESTINY_MIX.mid[d.key]=d.count_mid; DESTINY_MIX.high[d.key]=d.count_high; });
     }
     if(cfg.actions&&cfg.actions.length){
-      ACTION_INFO={}; ACTION_MIX={low:{},mid:{},high:{}};
+      Object.keys(ACTION_INFO).forEach(k=>delete ACTION_INFO[k]);
+      ACTION_MIX.low={}; ACTION_MIX.mid={}; ACTION_MIX.high={};
       cfg.actions.forEach(a=>{
         ACTION_INFO[a.key]={emoji:a.emoji||"",title:a.title,desc:a.description,flavor:a.flavor,
           hooked:a.hooked?{emoji:a.hooked.emoji||"",title:a.hooked.title,desc:a.hooked.desc,flavor:a.hooked.flavor}:null};
@@ -2054,7 +1901,8 @@ function applyServerConfig(cfg){
       });
     }
     if(cfg.envs&&cfg.envs.length){
-      ENV_INFO={}; ENV_COUNTS={};
+      Object.keys(ENV_INFO).forEach(k=>delete ENV_INFO[k]);
+      Object.keys(ENV_COUNTS).forEach(k=>delete ENV_COUNTS[k]);
       cfg.envs.forEach(e=>{ ENV_INFO[e.key]={animType:e.key,emoji:e.emoji||"",title:e.title,desc:e.description,flavor:e.flavor};
         ENV_COUNTS[e.key]=e.card_count; });
     }
