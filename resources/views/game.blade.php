@@ -186,6 +186,6 @@
   <div class="pixel-panel" style="padding:22px 28px; font-size:18px; font-weight:900;" id="toast-text"></div>
 </div>
 
-<script src="{{ asset('game/game.js') }}"></script>
+<script type="module" src="{{ asset('game/game.js') }}"></script>
 </body>
 </html>

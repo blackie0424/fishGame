@@ -3,67 +3,16 @@
    蘭嶼釣魚趣 — 互動版
    規則依《蘭嶼釣魚趣》說明書；魚牌組成取自 blackie0424/fishGame 資料
 ===================================================================== */
-"use strict";
+import { FISH_SPECIES, TARGET_SET } from './data/fish.js';
+import { SITE_CARDS } from './data/sites.js';
+import { ROLES } from './data/roles.js';
+import { ACTION_MIX, ACTION_INFO, DESTINY_CARDS, DESTINY_MIX, ENV_COUNTS, ENV_INFO } from './data/cards.js';
+import { shuffle, rnd, buildFishSupply, buildActionDeck, buildDestinyDeck, buildEnvDeck } from './utils/deck.js';
+import { siteTier, fishPass, fishAuto, fishNeedText } from './utils/rules.js';
 
 /* ---------------- 動態遊戲參數（可由 Laravel 後台調整） ---------------- */
 let CFG={rounds:15, goal:21, randomFishRatio:.35, bgmSpeedRound:10};
 
-/* ---------------- 資料：52 張魚牌 ---------------- */
-/* 魚牌組成＝xlsx「魚牌(撲克牌版本)」共 52 張（已逐一核對張數相符）：
-   難度1×17、難度2×19、難度3×5、難度4×5、難度5×6 */
-let FISH_SPECIES = [
-  // name, count, difficulty(1-5), category, 色盤 [身體, 腹部, 條紋]
-  ["Lagarow",4,1,"Rahet",["#7fb2c9","#d8e8ef","#4a7f97"]],
-  ["Tangara",3,1,"Rahet",["#9aa46a","#e4e6c3","#6b743f"]],
-  ["Kozapo",4,1,"Rahet",["#c98f5f","#f0d9bd","#8f5c33"]],
-  ["Lalavok",3,1,"Rahet",["#8d8fb5","#dcdcee","#5b5d85"]],
-  ["Takazit",3,1,"Rahet",["#6fae8f","#d2ecd9","#437a5e"]],
-  ["Cirow",4,2,"Rahet",["#c9c05f","#f2ecc0","#94893a"]],
-  ["Kowaos",3,2,"Rahet",["#b56f6f","#ecd0d0","#804242"]],
-  ["Kosikosi",3,2,"Oyod",["#e0a34c","#f7e3bd","#a86f21"]],
-  ["Malan",3,2,"Oyod",["#7c9fd8","#dae5f5","#4a6ea8"]],
-  ["Amingang",2,2,"Oyod",["#d87c9f","#f5dae5","#a84a6e"]],
-  ["Savali",2,2,"Oyod",["#6fc0b5","#d0efeb","#3f8d82"]],
-  ["Veras",2,2,"Oyod",["#a9d86f","#e7f5d0","#78a83f"]],
-  ["Angsa",3,3,"Rahet",["#c05fb2","#eec0e7","#8a3a7e"]],
-  ["Mahabteng",2,3,"Oyod",["#5fb2c0","#c0e7ee","#3a7e8a"]],
-  ["Anid",3,4,"Rahet",["#d8b06f","#f5e8d0","#a87f3f"]],
-  ["Tapez",2,4,"Rahet",["#9b6fd8","#e2d5f5","#6a3fa8"]],
-  ["Acyod",2,5,"Rahet",["#e06060","#f7c9c9","#a83030"]],
-  ["Cilat",2,5,"Rahet",["#bfcfe0","#f0f5fa","#7f97b2"]],
-  ["Ilek",1,5,"Oyod",["#f2c94c","#fbeec2","#c1912a"]],
-  ["Arawa",1,5,"Oyod",["#60c9e0","#c9eff7","#3095a8"]],
-];
-let TARGET_SET = new Set(["Ilek","Cilat","Acyod","Tapez"]);
-/* 捕獲判定 = 骰子 vs「魚的難度」，比較方式依場地卡的判定邏輯（≥ 或 >）
-   例：難度 1 的魚在 ≥ 場地必定捕獲（自動捕獲）；難度 5 在 > 場地需骰出 6 */
-function fishPass(roll,f){ return G.site.rule==="gt" ? roll>f.diff : roll>=f.diff; }
-function fishAuto(f){ return G.site.rule!=="gt" && f.diff<=1; }   // ≥1 恆成立 → 自動捕獲
-function fishNeedText(f){ return `${G.site.rule==="gt"?"骰出 >":"骰出 ≥"} ${f.diff}`; }
-/* 場地難度分級（供牌組配比）：≥且10張=低、≥且7張=中、>為高 */
-function siteTier(site){ return site.rule==="gt"?"high":(site.total>=10?"low":"mid"); }
-
-/* ---------------- 角色 ---------------- */
-/* 15 張場地卡（依《魚類桌遊.xlsx》場地卡工作表）：
-   rule: 'gte'=骰≥點位 / 'gt'=骰>點位；banned: 不放魚的點位；total: 場上固定魚牌總數
-   vis: 縮圖視覺參數（浪高/礁石/急流），僅由敘述與畫面讓玩家自行判斷，不標示難度 */
-let SITE_CARDS=[
- {name:"龍門港內",       rule:"gte", banned:[],        total:10, desc:"港內水面平靜如鏡，是新手練習拋竿與認識魚種的最佳起點。",           vis:{wave:0,rock:1,cur:0}},
- {name:"紅頭村前方海灘", rule:"gte", banned:[6],       total:10, desc:"近岸沙地與礁石交界，水深較淺，適合全家人一起體驗。",               vis:{wave:0,rock:1,cur:0,sand:1}},
- {name:"椰油村開元港",   rule:"gte", banned:[],        total:10, desc:"交通便利且魚群穩定，適合在黃昏時刻邊聊天邊釣魚。",                 vis:{wave:0,rock:1,cur:0,dusk:1}},
- {name:"漁人村潮間帶",   rule:"gte", banned:[5,6],     total:10, desc:"潮間帶豐富的生物多樣性，雖然魚體型不大，但種類繁多。",             vis:{wave:0,rock:2,cur:0,tide:1}},
- {name:"朗島避風港",     rule:"gte", banned:[],        total:10, desc:"部落前方的避風港，提供穩定的環境，是學習分享精神的好地方。",       vis:{wave:0,rock:1,cur:0}},
- {name:"八代灣外緣",     rule:"gte", banned:[1],       total:7,  desc:"這裡開始有洋流經過，需要一點技巧才能穩定魚竿。",                   vis:{wave:1,rock:1,cur:1}},
- {name:"東清灣礁石區",   rule:"gte", banned:[1],       total:7,  desc:"礁石縫隙中藏著好魚，但要注意魚鉤可能會掛在珊瑚礁上。",             vis:{wave:1,rock:3,cur:0}},
- {name:"五孔洞海域",     rule:"gte", banned:[1,2],     total:7,  desc:"充滿神秘傳說的地點，環境稍顯複雜，需要集中精神。",                 vis:{wave:1,rock:2,cur:1,cave:1}},
- {name:"坦克岩周邊",     rule:"gte", banned:[6],       total:7,  desc:"岩石結構特殊，吸引魚群聚集，是進階玩家試手氣的好去處。",           vis:{wave:1,rock:3,cur:0}},
- {name:"雙獅岩外海",     rule:"gte", banned:[1],       total:7,  desc:"位於兩大岩石夾縫，水流方向不穩定，考驗玩家對海象的判斷。",         vis:{wave:1,rock:3,cur:1}},
- {name:"小蘭嶼黑水溝",   rule:"gt",  banned:[1,2,3,6], total:5,  desc:"黑潮主流經過，水流湍急。只有真正的勇士才能在深海中取魚。",         vis:{wave:2,rock:1,cur:2,dark:1}},
- {name:"青青草原崖下",   rule:"gt",  banned:[1,2,6],   total:5,  desc:"懸崖下方風浪大，不僅環境艱困，對心理素質也是一大挑戰。",           vis:{wave:2,rock:2,cur:1,cliff:1}},
- {name:"大天池下海口",   rule:"gt",  banned:[1,2,6],   total:5,  desc:"此處匯集山上海水，環境變化莫測，魚群警覺性極高。",                 vis:{wave:2,rock:2,cur:2}},
- {name:"饅頭岩急流區",   rule:"gt",  banned:[1,2,6],   total:5,  desc:"饅頭岩旁水流極快，魚群力道猛烈，稍有不慎就會脫鉤。",               vis:{wave:2,rock:2,cur:2,dome:1}},
- {name:"東清外海大浪區", rule:"gt",  banned:[1,2,3,6], total:5,  desc:"面對太平洋的湧浪，每一步判定都需要戰戰兢兢，回報也最豐厚。",       vis:{wave:3,rock:1,cur:2}},
-];
 /* 場地縮圖：以浪高、礁石、急流、氛圍呈現環境，玩家從畫面與敘述自行判斷 */
 function siteThumb(card,w=150,h=84){
   const c=document.createElement("canvas"); c.width=w; c.height=h;
@@ -96,92 +45,9 @@ function siteThumb(card,w=150,h=84){
   return c;
 }
 
-let ROLES = [
-  {id:0,name:"小孩",emoji:"🧒",need:3,target:null,desc:"至少 3 條魚",skin:"#f0c8a0",cloth:"#4a90d8"},
-  {id:1,name:"成年男子",emoji:"🧑",need:5,target:["Cilat"],desc:"至少 5 條魚，含 cilat 一隻",skin:"#d8a878",cloth:"#c1272d"},
-  {id:2,name:"結婚的男人",emoji:"👨",need:6,target:["Ilek"],desc:"至少 6 條魚，含 ilek 一隻",skin:"#c89868",cloth:"#2d8a4c"},
-  {id:3,name:"有小孩的爸爸",emoji:"👨‍👧",need:6,target:["Ilek"],desc:"至少 6 條魚，含 ilek 一隻",skin:"#b88858",cloth:"#8a5c2d"},
-  {id:4,name:"有孫子的阿公",emoji:"👴",need:3,target:["Tapez","Acyod"],desc:"至少 3 條魚，含 tapez 或 acyod 一隻",skin:"#c8a888",cloth:"#5c5c6e"},
-];
-
-/* ---------------- 行動卡 24 張 ---------------- */
-/* 拉竿牌配比：依場地分級調整（總數 24） */
-let ACTION_MIX={
-  low: {hit:13,double:6,tangle:1,swallow:2,baitlost:1,snag:1},
-  mid: {hit:12,double:6,tangle:1,swallow:2,baitlost:2,snag:1},
-  high:{hit:12,double:8,tangle:1,swallow:2,baitlost:1,snag:0},
-};
-function buildActionDeck(){
-  const mix=ACTION_MIX[siteTier(G.site)];
-  const mk=(t,n)=>Array.from({length:n},()=>t);
-  return shuffle([].concat(...Object.entries(mix).map(([t,n])=>mk(t,n))));
-}
-/* 命運卡牌（依 xlsx「命運卡牌」工作表，共 30 張）：玩家甩竿後先抽命運卡，過關才進入拉竿卡 */
-let DESTINY_CARDS=[
- {t:"surge",   n:1, title:"湧浪來襲",     content:"湧浪突然拍打上岸，被淋濕了",                 result:"沒有漁獲",                                   kind:"fail"},
- {t:"baitoff", n:1, title:"魚餌掉了",     content:"魚餌沒有勾好，魚竿甩出去就掉了",             result:"沒有漁獲",                                   kind:"fail"},
- {t:"baiteat", n:1, title:"魚餌被吃了",   content:"魚餌被吃掉了",                               result:"沒有漁獲",                                   kind:"fail"},
- {t:"gearbad", n:1, title:"釣具沒有準備好",content:"浮標跟鉛配重錯誤，無法判別魚是否上鉤",       result:"沒有漁獲",                                   kind:"fail"},
- {t:"snag",    n:1, title:"釣到地球了",   content:"魚餌被礁石卡住，需要擲骰子",                 result:"沒有漁獲。擲骰 ≤3 魚鉤收不回來，休息一回合處理釣具", kind:"snag"},
- {t:"tangle",  n:1, title:"跟夥伴纏線了", content:"魚線跟夥伴的纏繞在一起，需要擲骰子",         result:"沒有漁獲。擲骰 ≤3 釣具損壞，與身旁玩家一起休息一回合", kind:"tangle"},
- {t:"wind",    n:2, title:"風太大了",     content:"因為風太大，需要用骰子決定釣具是否順利入海", result:"擲骰 >2 魚餌順利入海，進入拉竿階段",         kind:"wind"},
- {t:"hooked",  n:9, title:"中魚了",       content:"有魚上鉤了，把握好機會",                     result:"進入拉竿階段！",                             kind:"go"},
- {t:"swallow", n:4, title:"中魚了（吞鉤）",content:"有魚吞鉤了，把握好機會",                     result:"進入拉竿階段！若順利釣起，需休息一回合處理吞鉤", kind:"go_swallow"},
- {t:"double",  n:4, title:"雙鉤中魚了",   content:"使用兩門魚鉤都中魚了，把握好機會",           result:"進入拉竿階段！若拉竿成功可額外多得 1 條（含鄰近遞補）", kind:"go_double"},
- {t:"eel",     n:2, title:"遇到海鰻",     content:"海鰻會偷吃漁獲，需要用骰子決定漁獲狀態",     result:"擲骰 >2 保住漁獲；否則損失 1 條放回魚牌堆",   kind:"eel"},
- {t:"bigwave", n:1, title:"大浪來襲",     content:"有一波浪推來了，快把腳抬高，避開浪潮",       result:"擲骰 >2 躲過浪潮；否則跌倒，休息一回合",     kind:"bigwave"},
- {t:"seen1",   n:1, title:"被魚發現了",   content:"魚線用太粗了，被魚抓包了",                   result:"沒有漁獲",                                   kind:"fail"},
- {t:"seen2",   n:1, title:"被魚發現了",   content:"站太高了，被魚抓包了",                       result:"沒有漁獲",                                   kind:"fail"},
-];
-/* 命運牌配比：依場地分級調整（總數 30；平靜海域意外少、險惡海域魚況兇猛） */
-let DESTINY_MIX={
-  low: {surge:1,baitoff:1,baiteat:0,gearbad:0,seen1:1,seen2:0,snag:1,tangle:1,wind:1,hooked:15,swallow:3,double:6,eel:0,bigwave:0},
-  mid: {surge:1,baitoff:1,baiteat:0,gearbad:0,seen1:1,seen2:0,snag:1,tangle:1,wind:1,hooked:14,swallow:3,double:5,eel:1,bigwave:1},
-  high:{surge:1,baitoff:1,baiteat:0,gearbad:0,seen1:1,seen2:0,snag:1,tangle:1,wind:1,hooked:14,swallow:3,double:7,eel:0,bigwave:0},
-};
-function buildDestinyDeck(){
-  const mix=DESTINY_MIX[siteTier(G.site)];
-  const d=[];
-  DESTINY_CARDS.forEach(c=>{ const n=mix[c.t]!=null?mix[c.t]:c.n; for(let i=0;i<n;i++) d.push(c); });
-  return shuffle(d);
-}
-
-let ACTION_INFO = {
-  hit:     {emoji:"🎣", title:"中魚了！", desc:"成功拉竿：進行捕獲判定。", flavor:"魚兒咬餌了，現在看你的技術。",
-            hooked:{emoji:"💪", title:"穩住！開始收線", desc:"沉住氣收線：進行捕獲判定。", flavor:"竿尾彎了，一收一放之間見真章。"}},
-  double:  {emoji:"🎣🎣", title:"雙鉤中魚！", desc:"強力拉竿：可拉 2 條、每條各自判定（含鄰近遞補）。", flavor:"運氣極佳、技術純熟，一次吸引兩條魚上鉤。",
-            hooked:{emoji:"🎣🎣", title:"另一門鉤也中了！", desc:"收線途中另一門鉤也中魚：可拉 2 條、每條各自判定（含鄰近遞補）。", flavor:"雙竿齊沉，今天海神眷顧。"}},
-  tangle:  {emoji:"🪢", title:"跟夥伴纏線了", desc:"協作失誤：與離你最近的夥伴魚線纏繞，雙方皆無漁獲。擲骰未達 3，兩人一起休息一回合。", flavor:"站得越近，線越容易繞在一起。",
-            hooked:{emoji:"🪢", title:"魚拖著線纏住夥伴！", desc:"上鉤的魚亂竄，把線拖進離你最近的夥伴那裡——魚跑了，雙方皆無漁獲。擲骰未達 3，兩人一起休息一回合。", flavor:"大魚一發力，兩個人的線全亂了。"}},
-  swallow: {emoji:"😮", title:"吞鉤了！", desc:"自動捕獲：隨機取得該水域 1 張魚牌，但下回合休息。", flavor:"穩拿，但處理吞鉤很費時。",
-            hooked:{emoji:"😮", title:"魚把鉤吞得更深", desc:"自動捕獲：直接取得該水域 1 張魚牌，但下回合休息處理。", flavor:"連鉤帶線吞下去了，跑不掉、也急不得。"}},
-  baitlost:{emoji:"🪱", title:"魚餌掉了", desc:"直接失敗：本次行動結束，不進行判定。", flavor:"魚只吃了餌就跑了，只能重新整理釣組。",
-            hooked:{emoji:"💨", title:"脫鉤了！", desc:"魚在收線途中甩脫了魚鉤：本次行動結束，不進行判定。", flavor:"就差一點！魚尾一甩，回到了大海。"}},
-  snag:    {emoji:"🪨", title:"釣到地球（底礁）", desc:"設備損壞：本次行動結束，下回合需休息處理線組。", flavor:"魚鉤被礁石卡住了。",
-            hooked:{emoji:"🪨", title:"魚鑽進礁石縫！", desc:"上鉤的魚鑽進礁縫把線卡死：本次行動結束，下回合需休息處理線組。", flavor:"老釣手都知道，讓魚鑽了洞就只能斷線。"}},
-};
-
-/* ---------------- 環境卡 15 張 ---------------- */
-let ENV_COUNTS={calm:5,eel:2,hightide:2,wave:3,lowtide:2,chat:1,escape:2}; // 可由後台調整
-function buildEnvDeck(){
-  const mk=(t,n)=>Array.from({length:n},()=>t);
-  return shuffle([].concat(...Object.entries(ENV_COUNTS).map(([t,n])=>mk(t,n))));
-}
-let ENV_INFO = {
-  calm:    {animType:"calm", emoji:"🌅", title:"風平浪靜", desc:"無事發生，下一回合大家都正常釣魚。", flavor:"海洋寬容的一面，適合釣魚。"},
-  eel:     {animType:"eel", emoji:"🐍", title:"海鰻偷襲", desc:"海鰻爬上岸偷水窪的漁獲！每位玩家擲骰，小於 3 損失 1 條放回補充堆。", flavor:"趁大家盯著海面，牠從岩縫溜了上來。"},
-  escape:  {animType:"escape", emoji:"🐟💨", title:"奮力逃脫", desc:"水窪裡的魚奮力跳出！每位玩家擲骰，小於 3 損失 1 條放回補充堆。", flavor:"魚池的魚奮力逃出水池，游回大海。"},
-  hightide:{animType:"hightide", emoji:"🌊", title:"漲潮了", desc:"魚群移動：場上所有魚牌重新洗牌置放。", flavor:"潮水帶著魚群換了位置。"},
-  lowtide: {animType:"lowtide", emoji:"🏖️", title:"退潮了", desc:"魚群移動：場上所有魚牌重新洗牌置放。", flavor:"礁岩露出，魚群游向別處。"},
-  wave:    {animType:"wave", emoji:"🌊💥", title:"大浪打來", desc:"自然反撲：每位玩家擲骰，小於 3 需強制休息一回合。", flavor:"大浪出現，單腳站立、避免被浪沖倒！"},
-  chat:    {animType:"chat", emoji:"💬", title:"風平浪靜，聊聊天吧", desc:"全員同步休息一回合。", flavor:"海邊的閒聊，也是文化的傳承。"},
-};
-
 /* ---------------- 工具 ---------------- */
 const $=s=>document.querySelector(s);
-const rnd=n=>Math.floor(Math.random()*n);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-function shuffle(a){for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]];}return a;}
 
 /* =====================================================================
    音效引擎（Web Audio 合成，無外部檔案）
@@ -416,11 +282,6 @@ let speciesByName={};
 function rebuildSpeciesIndex(){ speciesByName={}; FISH_SPECIES.forEach(sp=>speciesByName[sp[0]]=sp); }
 rebuildSpeciesIndex();
 
-function buildFishSupply(){
-  const arr=[];
-  FISH_SPECIES.forEach(sp=>{ for(let i=0;i<sp[1];i++) arr.push({name:sp[0],diff:sp[2],cat:sp[3],sp}); });
-  return shuffle(arr);
-}
 /* 依難度分桶補魚：點位 s 優先抽 difficulty≈s 的魚 */
 function refillSpots(log=false){
   G.spotCap=siteCaps();
@@ -448,8 +309,8 @@ function refillSpots(log=false){
   renderSpots();
 }
 function reshuffleBoard(){
-  const all=G.spots.flat(); G.spots=[[],[],[],[],[],[]];
-  shuffle(all);
+  let all=G.spots.flat(); G.spots=[[],[],[],[],[],[]];
+  all=shuffle(all);
   let i=0;
   outer: while(i<all.length){
     let placed=false;
@@ -1119,12 +980,12 @@ async function launchGame(){
   G.players=[]; G.round=1; G.turnIdx=0; G.over=false; G.busy=false;
   G.site=SITE_CARDS[G.siteIdx];
   G.fishSupply=buildFishSupply();
-  G.actionDeck=buildActionDeck();
+  G.actionDeck=buildActionDeck(G.site);
   G.envDeck=buildEnvDeck();
   G.spots=[[],[],[],[],[],[]];
   // 角色分配
-  const pool=ROLES.map(r=>r.id).filter(id=>id!==G.humanRole);
-  shuffle(pool);
+  let pool=ROLES.map(r=>r.id).filter(id=>id!==G.humanRole);
+  pool=shuffle(pool);
   const nm=playerNames();
   let aiIdx=0;
   for(let i=0;i<G.count;i++){
@@ -1282,7 +1143,7 @@ function aiPickSpot(p){
 /* ---------------- 抽行動卡 → 判定 → 取魚 ---------------- */
 /* 階段一：命運卡。回傳物件 {proceed, flags} — proceed=true 才進入拉竿階段 */
 async function drawDestiny(p){
-  if(!G.destinyDeck||!G.destinyDeck.length) G.destinyDeck=buildDestinyDeck();
+  if(!G.destinyDeck||!G.destinyDeck.length) G.destinyDeck=buildDestinyDeck(G.site);
   const c=G.destinyDeck.pop();
   addLog(`🔮 ${p.name} 的命運卡：「${c.title}」— ${c.content}`);
   await showCard("destiny",{animType:c.t,emoji:"🔮",title:c.title,desc:c.content,flavor:c.result},p.human);
@@ -1316,7 +1177,7 @@ async function drawDestiny(p){
     case "eel":{
       const roll=await rollDice(p,"海鰻來了！擲骰 >2 保住漁獲",r=>r>2);
       if(roll<=2&&p.catch.length){
-        const f=p.catch.splice(rnd(p.catch.length),1)[0]; G.fishSupply.push(f); shuffle(G.fishSupply);
+        const f=p.catch.splice(rnd(p.catch.length),1)[0]; G.fishSupply.push(f); G.fishSupply=shuffle(G.fishSupply);
         SFX.eel(); renderPlayers();
         addLog(`🐍 海鰻偷走了 ${p.name} 的 <b>${f.name}</b>（骰 ${roll}）！`,"lg-bad");
         await toast(`🐍 海鰻偷走了 ${f.name}！`);
@@ -1344,7 +1205,7 @@ async function doFishing(p,spot){
   // 單鈎命運時，跳過「雙鈎」行動卡，避免情境矛盾
   let card;
   do {
-    if(!G.actionDeck.length) G.actionDeck=buildActionDeck();
+    if(!G.actionDeck.length) G.actionDeck=buildActionDeck(G.site);
     card=G.actionDeck.pop();
   } while(!destiny.flags.double && card==="double");
   // 語境切換：魚已上鉤（命運中魚/吞鉤/雙鉤）時使用收線階段的敘述，避免「餌才掉」等矛盾
@@ -1401,16 +1262,16 @@ async function doFishing(p,spot){
           addLog(`啟動「鄰近遞補」：由鄰近水域補上一條！`,"lg-sys");
         }
         const f=G.spots[src].splice(rnd(G.spots[src].length),1)[0];
-        if(fishAuto(f)){                                            // 難度 1 於 ≥ 場地：自動捕獲
+        if(fishAuto(f,G.site)){                                     // 難度 1 於 ≥ 場地：自動捕獲
           got.push(f); SFX.good();
           addLog(`${p.name} 拉起 <b>${f.name}</b>（難度 1）— <b>自動捕獲</b>，不需判定！`,"lg-ok");
           await toast(`🐟 ${f.name} 上鉤即獲！（自動捕獲）`,1400);
         }else{
-          const roll=await rollDice(p,`${f.name} 上鉤了！難度 ${f.diff}：${fishNeedText(f)}`,r=>fishPass(r,f),{fight:true,fish:f});
-          if(fishPass(roll,f)){ got.push(f); addLog(`${p.name} 骰出 ${roll}，成功捕獲 <b>${f.name}</b>（難度 ${f.diff}）！`,"lg-ok"); }
+          const roll=await rollDice(p,`${f.name} 上鉤了！難度 ${f.diff}：${fishNeedText(f,G.site)}`,r=>fishPass(r,f,G.site),{fight:true,fish:f});
+          if(fishPass(roll,f,G.site)){ got.push(f); addLog(`${p.name} 骰出 ${roll}，成功捕獲 <b>${f.name}</b>（難度 ${f.diff}）！`,"lg-ok"); }
           else{
             G.spots[src].push(f); SFX.bad();                        // 掙脫的魚回到海裡
-            addLog(`${p.name} 骰出 ${roll}，<b>${f.name}</b> 掙脫游走了（${fishNeedText(f)}）。`,"lg-bad");
+            addLog(`${p.name} 骰出 ${roll}，<b>${f.name}</b> 掙脫游走了（${fishNeedText(f,G.site)}）。`,"lg-bad");
             await toast(`🎲 ${roll} 點⋯${f.name} 掙脫了`);
           }
         }
@@ -1968,7 +1829,7 @@ async function roundEnd(){
         const roll=await rollDice(p, env==="eel"?"海鰻撲向水窪！擲骰 <3 損失 1 條漁獲":"魚兒奮力跳出！擲骰 <3 損失 1 條漁獲", r=>r>=3);
         if(roll<3){ const f=p.catch.splice(rnd(p.catch.length),1)[0]; G.fishSupply.push(f); lost.push(`${p.name} 的 ${f.name}`); }
       }
-      shuffle(G.fishSupply); renderPlayers();
+      G.fishSupply=shuffle(G.fishSupply); renderPlayers();
       const what=env==="eel"?"被海鰻偷走":"奮力逃回大海";
       if(lost.length){ addLog(`🐟 ${lost.join("、")} ${what}了！`,"lg-bad"); await toast(env==="eel"?"🐍 有漁獲被海鰻偷走了！":"🐟💨 有漁獲逃回大海了！"); }
       else await toast(env==="eel"?"🐍 大家都保住了漁獲":"🐟 水窪裡的魚都被看牢了");
