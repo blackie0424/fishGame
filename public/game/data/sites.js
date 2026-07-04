@@ -1,0 +1,17 @@
+export const SITE_CARDS = [
+  {name:"龍門港內",       rule:"gte", banned:[],        total:10, desc:"港內水面平靜如鏡，是新手練習拋竿與認識魚種的最佳起點。",           vis:{wave:0,rock:1,cur:0}},
+  {name:"紅頭村前方海灘", rule:"gte", banned:[6],       total:10, desc:"近岸沙地與礁石交界，水深較淺，適合全家人一起體驗。",               vis:{wave:0,rock:1,cur:0,sand:1}},
+  {name:"椰油村開元港",   rule:"gte", banned:[],        total:10, desc:"交通便利且魚群穩定，適合在黃昏時刻邊聊天邊釣魚。",                 vis:{wave:0,rock:1,cur:0,dusk:1}},
+  {name:"漁人村潮間帶",   rule:"gte", banned:[5,6],     total:10, desc:"潮間帶豐富的生物多樣性，雖然魚體型不大，但種類繁多。",             vis:{wave:0,rock:2,cur:0,tide:1}},
+  {name:"朗島避風港",     rule:"gte", banned:[],        total:10, desc:"部落前方的避風港，提供穩定的環境，是學習分享精神的好地方。",       vis:{wave:0,rock:1,cur:0}},
+  {name:"八代灣外緣",     rule:"gte", banned:[1],       total:7,  desc:"這裡開始有洋流經過，需要一點技巧才能穩定魚竿。",                   vis:{wave:1,rock:1,cur:1}},
+  {name:"東清灣礁石區",   rule:"gte", banned:[1],       total:7,  desc:"礁石縫隙中藏著好魚，但要注意魚鉤可能會掛在珊瑚礁上。",             vis:{wave:1,rock:3,cur:0}},
+  {name:"五孔洞海域",     rule:"gte", banned:[1,2],     total:7,  desc:"充滿神秘傳說的地點，環境稍顯複雜，需要集中精神。",                 vis:{wave:1,rock:2,cur:1,cave:1}},
+  {name:"坦克岩周邊",     rule:"gte", banned:[6],       total:7,  desc:"岩石結構特殊，吸引魚群聚集，是進階玩家試手氣的好去處。",           vis:{wave:1,rock:3,cur:0}},
+  {name:"雙獅岩外海",     rule:"gte", banned:[1],       total:7,  desc:"位於兩大岩石夾縫，水流方向不穩定，考驗玩家對海象的判斷。",         vis:{wave:1,rock:3,cur:1}},
+  {name:"小蘭嶼黑水溝",   rule:"gt",  banned:[1,2,3,6], total:5,  desc:"黑潮主流經過，水流湍急。只有真正的勇士才能在深海中取魚。",         vis:{wave:2,rock:1,cur:2,dark:1}},
+  {name:"青青草原崖下",   rule:"gt",  banned:[1,2,6],   total:5,  desc:"懸崖下方風浪大，不僅環境艱困，對心理素質也是一大挑戰。",           vis:{wave:2,rock:2,cur:1,cliff:1}},
+  {name:"大天池下海口",   rule:"gt",  banned:[1,2,6],   total:5,  desc:"此處匯集山上海水，環境變化莫測，魚群警覺性極高。",                 vis:{wave:2,rock:2,cur:2}},
+  {name:"饅頭岩急流區",   rule:"gt",  banned:[1,2,6],   total:5,  desc:"饅頭岩旁水流極快，魚群力道猛烈，稍有不慎就會脫鉤。",               vis:{wave:2,rock:2,cur:2,dome:1}},
+  {name:"東清外海大浪區", rule:"gt",  banned:[1,2,3,6], total:5,  desc:"面對太平洋的湧浪，每一步判定都需要戰戰兢兢，回報也最豐厚。",       vis:{wave:3,rock:1,cur:2}},
+];
