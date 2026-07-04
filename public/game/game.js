@@ -13,6 +13,8 @@ import { FISH_ART } from './data/fishArt.js';
 import { drawFish, drawAvatar, getFishArt, drawPixFisher } from './renderer/sprites.js';
 import { drawSeaBands, drawFishShadow, drawRockRight, tickDrops } from './renderer/scene.js';
 import { createGameState, advanceTurn } from './state/GameState.js';
+import { INTRO_SCENES } from './data/intro.js';
+import { startFight } from './renderer/fight.js';
 
 /* ---------------- 動態遊戲參數（可由 Laravel 後台調整） ---------------- */
 let CFG={rounds:15, goal:21, randomFishRatio:.35, bgmSpeedRound:10};
@@ -692,13 +694,6 @@ function renderRoleList(){
 /* =====================================================================
    開場劇情動畫（可跳過）
 ===================================================================== */
-const INTRO_SCENES=[
-  {speaker:"", text:"清晨的蘭嶼，太陽正從太平洋的海平面升起。\n達悟族人相信：海，是天神賜給族人的糧倉。", scene:"dawn"},
-  {speaker:"🧓 部落耆老", text:"「孩子們，今天的潮水很好，是適合下竿的日子。\n跟我到礁岩上來，我教你們祖先傳下來的釣魚方法。」", scene:"elder"},
-  {speaker:"", text:"每個家，都需要魚 ——\n小孩要學會第一竿、爸爸要養家、\n阿公想念 tapez 的味道、成年的男人想證明自己能釣起 cilat。", scene:"family"},
-  {speaker:"🧓 部落耆老", text:"「記住，海洋教我們的第一件事，是『分享』。\n捕得多的人，要分給捕得少的人 ——\n這樣部落才能一起走得長遠。」", scene:"share"},
-  {speaker:"", text:"15 個回合、全體 21 條魚。\n帶上你的魚竿，和夥伴們一起走向海邊吧！", scene:"depart"},
-];
 function playIntro(){
   return new Promise(res=>{
     const ov=$("#ov-intro"), cv=$("#intro-canvas"), tb=$("#intro-textbox");
@@ -1466,69 +1461,7 @@ function showCard(kind,info,interactive){
 /* =====================================================================
    與魚搏鬥動畫（骰子判定時的拉扯畫面）
 ===================================================================== */
-function startFight(style){
-  style=style||{skin:"#d8a878",cloth:"#c1272d",hair:"#12100e",u:4};
-  const fu=(style.u||4)+1;   // 搏鬥畫面放大一號
-  const cv=$("#fight-canvas"); cv.style.display="block";
-  const g=cv.getContext("2d"); g.imageSmoothingEnabled=false;
-  const W=cv.width,H=cv.height, waterY=H*.42, rockX=W*.74;
-  const st={mode:"tug", t:0, alive:true, intensity:1};
-  function loop(){
-    if(!st.alive) return;
-    // 海與礁岩
-    drawSeaBands(g,W,H,waterY);;
-    g.fillStyle="#4e4a44"; g.fillRect(rockX-14,waterY+20,W,H);
-    g.fillStyle="#66604f"; g.fillRect(rockX-24,waterY+14,W,12);
-    // 拉扯相位
-    const tug=Math.sin(st.t*.24)*st.intensity;
-    const lean=4+tug*4;
-    // 玩家角色本人在拉竿（服色/白鬚/嬰兒/木杖/體型皆與角色一致）
-    const gy2=waterY+34+13*fu*0; // 站位
-    const f=drawPixFisher(g,rockX+22,waterY+34+8, .55, lean, false, null, 0,
-      Object.assign({},style,{u:fu,noRod:true}));
-    // 魚位置
-    let fx=W*.22 - tug*14, fy=waterY+16;
-    if(st.mode==="win"){ const k=Math.min(1,(st.t-st.winT)/26); fx=W*.22+(rockX-40-W*.22)*k; fy=waterY+16-Math.sin(k*Math.PI)*74; }
-    if(st.mode==="lose"){ const k=Math.min(1,(st.t-st.winT)/34); fx=W*.22-k*W*.34; fy=waterY+14+Math.sin(st.t*.3)*2; }
-    // 彎曲的竿（越用力越彎）
-    const bend=st.mode==="tug"? 26+tug*14 : (st.mode==="win"? 8 : 2);
-    const tipX=f.hx-96, tipY=f.hy-30+bend;   // f.hx/f.hy＝角色持竿手位置
-    g.strokeStyle="#241c14"; g.lineWidth=5;
-    g.beginPath(); g.moveTo(f.hx,f.hy);
-    g.quadraticCurveTo(f.hx-52,f.hy-46+bend*.4,tipX,tipY); g.stroke();
-    // 釣線：失敗時與魚「分離」，空線鬆垂晃動，魚已自由游走
-    g.strokeStyle="rgba(240,240,240,.75)"; g.lineWidth=1.5;
-    g.beginPath(); g.moveTo(tipX,tipY);
-    if(st.mode==="lose"){ const sway=Math.sin(st.t*.15)*8;
-      g.quadraticCurveTo(tipX-6+sway,tipY+26,tipX-2+sway,tipY+44); }  // 斷線垂盪
-    else g.lineTo(fx+6,fy);
-    g.stroke();
-    if(st.mode==="lose"&&st.t-st.winT===1){ // 脫鉤瞬間小水花
-      g.fillStyle="#cfeefb"; for(let i=0;i<5;i++) g.fillRect(fx+rnd(16)-8,waterY+4+rnd(8),3,3);
-    }
-    // 魚（掙扎的剪影）
-    g.fillStyle= st.mode==="win" ? "#f2c94c" : "#0d2438";
-    const flap=Math.sin(st.t*.5)*3;
-    g.beginPath(); g.ellipse(fx,fy,14,7,tug*.15,0,7); g.fill();
-    g.beginPath(); g.moveTo(fx-13,fy); g.lineTo(fx-22,fy-6+flap); g.lineTo(fx-22,fy+6+flap); g.fill();
-    g.globalAlpha=1;
-    // 掙扎水花
-    if(st.mode==="tug"&&st.t%5<2){
-      g.fillStyle="#cfeefb";
-      for(let i=0;i<4;i++) g.fillRect(fx-10+rnd(24),waterY+6-rnd(10),3,3);
-    }
-    if(st.mode==="win"&&st.t-st.winT<10){ g.fillStyle="#fff3c2"; for(let i=0;i<6;i++) g.fillRect(fx-14+rnd(28),fy-12+rnd(24),3,3); }
-    // 音效節拍
-    if(st.mode==="tug"){ if(st.t%14===0) SFX.reel(2); if(st.t%37===0) SFX.creak(); }
-    st.t++; requestAnimationFrame(loop);
-  }
-  loop();
-  return {
-    boost(){ st.intensity=1.9; },
-    result(ok){ st.mode=ok?"win":"lose"; st.winT=st.t; st.intensity=0; },
-    stop(){ st.alive=false; cv.style.display="none"; },
-  };
-}
+function startFightScene(style){ return startFight($("#fight-canvas"), style, SFX); }
 
 /* ---------------- 骰子 ---------------- */
 const PIP_MAP={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
@@ -1552,7 +1485,7 @@ function rollDice(p,needStr,passFn,opts={}){
     paintDie(1+rnd(6));
     const btn=$("#btn-roll");
     if(opts.fight) btn.textContent="💪 用力拉竿！"; else btn.textContent="🎲 擲骰子";
-    const fight = opts.fight ? startFight(FISHERS[p.idx]&&FISHERS[p.idx].st) : null;   // 玩家角色本人上場拉扯
+    const fight = opts.fight ? startFightScene(FISHERS[p.idx]&&FISHERS[p.idx].st) : null;   // 玩家角色本人上場拉扯
     const doRoll=async()=>{
       btn.style.visibility="hidden";
       if(fight) fight.boost();                        // 擲骰時拉扯加劇
