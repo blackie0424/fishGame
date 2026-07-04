@@ -27,8 +27,10 @@ class FishImageAnalyzerTest extends TestCase
         ], $art);
 
         Http::fake([
-            'api.anthropic.com/*' => Http::response([
-                'content' => [['type' => 'text', 'text' => json_encode($art)]],
+            'generativelanguage.googleapis.com/*' => Http::response([
+                'candidates' => [[
+                    'content' => ['parts' => [['text' => json_encode($art)]]],
+                ]],
             ], 200),
         ]);
     }
@@ -133,7 +135,7 @@ class FishImageAnalyzerTest extends TestCase
     public function test_returns_503_when_api_fails(): void
     {
         Http::fake([
-            'api.anthropic.com/*' => Http::response([], 500),
+            'generativelanguage.googleapis.com/*' => Http::response([], 500),
         ]);
         $image = UploadedFile::fake()->image('fish.jpg');
 
@@ -146,8 +148,10 @@ class FishImageAnalyzerTest extends TestCase
     public function test_returns_422_when_response_has_no_json(): void
     {
         Http::fake([
-            'api.anthropic.com/*' => Http::response([
-                'content' => [['type' => 'text', 'text' => '無法辨識這張圖片']],
+            'generativelanguage.googleapis.com/*' => Http::response([
+                'candidates' => [[
+                    'content' => ['parts' => [['text' => '無法辨識這張圖片']]],
+                ]],
             ], 200),
         ]);
         $image = UploadedFile::fake()->image('fish.jpg');

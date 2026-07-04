@@ -19,25 +19,19 @@ class FishImageAnalyzerController extends Controller
         $imageData = base64_encode(file_get_contents($request->file('image')->path()));
         $mimeType  = $request->file('image')->getMimeType();
 
-        $response = Http::withHeaders([
-            'x-api-key'         => config('services.anthropic.key'),
-            'anthropic-version' => '2023-06-01',
-        ])->timeout(30)->post('https://api.anthropic.com/v1/messages', [
-            'model'      => 'claude-opus-4-7',
-            'max_tokens' => 512,
-            'messages'   => [[
-                'role'    => 'user',
-                'content' => [
+        $apiKey   = config('services.google_ai.key');
+        $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$apiKey}";
+
+        $response = Http::timeout(30)->post($endpoint, [
+            'contents' => [[
+                'parts' => [
                     [
-                        'type'   => 'image',
-                        'source' => [
-                            'type'       => 'base64',
-                            'media_type' => $mimeType,
-                            'data'       => $imageData,
+                        'inlineData' => [
+                            'mimeType' => $mimeType,
+                            'data'     => $imageData,
                         ],
                     ],
                     [
-                        'type' => 'text',
                         'text' => $this->buildPrompt($request->input('description', '')),
                     ],
                 ],
@@ -48,7 +42,7 @@ class FishImageAnalyzerController extends Controller
             return response()->json(['error' => 'AI 服務暫時無法使用，請稍後再試。'], 503);
         }
 
-        $text = $response->json('content.0.text', '');
+        $text = $response->json('candidates.0.content.parts.0.text', '');
 
         preg_match('/\{[^{}]*\}/s', $text, $matches);
         if (empty($matches[0])) {
