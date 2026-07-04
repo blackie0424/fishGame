@@ -15,7 +15,7 @@ class GameDataSeeder extends Seeder
     {
         $now = now();
 
-        DB::table('fish_species')->insert([
+        DB::table('fish_species')->insertOrIgnore([
             ['name' => 'Lagarow', 'category' => 'Rahet', 'difficulty' => 1, 'card_count' => 4, 'art' => json_encode(['shape' => 'long', 'body' => '#a8b0b5', 'belly' => '#dde2e5', 'acc' => '#666e73', 'pat' => 'plain']), 'sort' => 0, 'created_at' => $now, 'updated_at' => $now],
             ['name' => 'Tangara', 'category' => 'Rahet', 'difficulty' => 1, 'card_count' => 3, 'art' => json_encode(['shape' => 'oval', 'body' => '#d97a70', 'belly' => '#f2c5bd', 'acc' => '#a03a30', 'pat' => 'plain', 'bigEye' => true]), 'sort' => 1, 'created_at' => $now, 'updated_at' => $now],
             ['name' => 'Kozapo', 'category' => 'Rahet', 'difficulty' => 1, 'card_count' => 4, 'art' => json_encode(['shape' => 'oval', 'body' => '#8a4a3a', 'belly' => '#c99a80', 'acc' => '#54291f', 'pat' => 'spots']), 'sort' => 2, 'created_at' => $now, 'updated_at' => $now],
@@ -38,7 +38,7 @@ class GameDataSeeder extends Seeder
             ['name' => 'Arawa', 'category' => 'Oyod', 'difficulty' => 5, 'card_count' => 1, 'art' => json_encode(['shape' => 'long', 'body' => '#c0ccd4', 'belly' => '#f0f4f7', 'acc' => '#607a88', 'pat' => 'hline']), 'sort' => 19, 'created_at' => $now, 'updated_at' => $now],
         ]);
 
-        DB::table('roles')->insert([
+        DB::table('roles')->insertOrIgnore([
             ['name' => '小孩', 'emoji' => '🧒', 'need' => 3, 'targets' => null, 'description' => '至少 3 條魚', 'skin' => '#f0c8a0', 'cloth' => '#4a90d8', 'sort' => 0, 'created_at' => $now, 'updated_at' => $now],
             ['name' => '成年男子', 'emoji' => '🧑', 'need' => 5, 'targets' => json_encode(['Cilat']), 'description' => '至少 5 條魚，含 cilat 一隻', 'skin' => '#d8a878', 'cloth' => '#c1272d', 'sort' => 1, 'created_at' => $now, 'updated_at' => $now],
             ['name' => '結婚的男人', 'emoji' => '👨', 'need' => 6, 'targets' => json_encode(['Ilek']), 'description' => '至少 6 條魚，含 ilek 一隻', 'skin' => '#c89868', 'cloth' => '#2d8a4c', 'sort' => 2, 'created_at' => $now, 'updated_at' => $now],
@@ -46,7 +46,7 @@ class GameDataSeeder extends Seeder
             ['name' => '有孫子的阿公', 'emoji' => '👴', 'need' => 3, 'targets' => json_encode(['Tapez', 'Acyod']), 'description' => '至少 3 條魚，含 tapez 或 acyod 一隻', 'skin' => '#c8a888', 'cloth' => '#5c5c6e', 'sort' => 4, 'created_at' => $now, 'updated_at' => $now],
         ]);
 
-        DB::table('site_cards')->insert([
+        DB::table('site_cards')->insertOrIgnore([
             ['name' => '龍門港內', 'rule' => 'gte', 'banned' => json_encode([]), 'board_total' => 10, 'description' => '港內水面平靜如鏡，是新手練習拋竿與認識魚種的最佳起點。', 'vis' => json_encode(['wave' => 0, 'rock' => 1, 'cur' => 0]), 'sort' => 0, 'created_at' => $now, 'updated_at' => $now],
             ['name' => '紅頭村前方海灘', 'rule' => 'gte', 'banned' => json_encode([6]), 'board_total' => 10, 'description' => '近岸沙地與礁石交界，水深較淺，適合全家人一起體驗。', 'vis' => json_encode(['wave' => 0, 'rock' => 1, 'cur' => 0, 'sand' => 1]), 'sort' => 1, 'created_at' => $now, 'updated_at' => $now],
             ['name' => '椰油村開元港', 'rule' => 'gte', 'banned' => json_encode([]), 'board_total' => 10, 'description' => '交通便利且魚群穩定，適合在黃昏時刻邊聊天邊釣魚。', 'vis' => json_encode(['wave' => 0, 'rock' => 1, 'cur' => 0, 'dusk' => 1]), 'sort' => 2, 'created_at' => $now, 'updated_at' => $now],
@@ -64,7 +64,7 @@ class GameDataSeeder extends Seeder
             ['name' => '東清外海大浪區', 'rule' => 'gt', 'banned' => json_encode([1, 2, 3, 6]), 'board_total' => 5, 'description' => '面對太平洋的湧浪，每一步判定都需要戰戰兢兢，回報也最豐厚。', 'vis' => json_encode(['wave' => 3, 'rock' => 1, 'cur' => 2]), 'sort' => 14, 'created_at' => $now, 'updated_at' => $now],
         ]);
 
-        DB::table('destiny_cards')->insert([
+        DB::table('destiny_cards')->insertOrIgnore([
             ['key' => 'surge', 'title' => '湧浪來襲', 'content' => '湧浪突然拍打上岸，被淋濕了', 'result' => '沒有漁獲', 'kind' => 'fail', 'count_low' => 1, 'count_mid' => 1, 'count_high' => 1, 'sort' => 0, 'created_at' => $now, 'updated_at' => $now],
             ['key' => 'baitoff', 'title' => '魚餌掉了', 'content' => '魚餌沒有勾好，魚竿甩出去就掉了', 'result' => '沒有漁獲', 'kind' => 'fail', 'count_low' => 1, 'count_mid' => 1, 'count_high' => 1, 'sort' => 1, 'created_at' => $now, 'updated_at' => $now],
             ['key' => 'baiteat', 'title' => '魚餌被吃了', 'content' => '魚餌被吃掉了', 'result' => '沒有漁獲', 'kind' => 'fail', 'count_low' => 0, 'count_mid' => 0, 'count_high' => 0, 'sort' => 2, 'created_at' => $now, 'updated_at' => $now],
@@ -81,7 +81,7 @@ class GameDataSeeder extends Seeder
             ['key' => 'seen2', 'title' => '被魚發現了', 'content' => '站太高了，被魚抓包了', 'result' => '沒有漁獲', 'kind' => 'fail', 'count_low' => 0, 'count_mid' => 0, 'count_high' => 0, 'sort' => 13, 'created_at' => $now, 'updated_at' => $now],
         ]);
 
-        DB::table('action_cards')->insert([
+        DB::table('action_cards')->insertOrIgnore([
             ['key' => 'hit', 'emoji' => '🎣', 'title' => '中魚了！', 'description' => '成功拉竿：進行捕獲判定。', 'flavor' => '魚兒咬餌了，現在看你的技術。', 'hooked' => json_encode(['emoji' => '💪', 'title' => '穩住！開始收線', 'desc' => '沉住氣收線：進行捕獲判定。', 'flavor' => '竿尾彎了，一收一放之間見真章。']), 'count_low' => 13, 'count_mid' => 12, 'count_high' => 12, 'sort' => 0, 'created_at' => $now, 'updated_at' => $now],
             ['key' => 'double', 'emoji' => '🎣🎣', 'title' => '雙鉤中魚！', 'description' => '強力拉竿：可拉 2 條、每條各自判定（含鄰近遞補）。', 'flavor' => '運氣極佳、技術純熟，一次吸引兩條魚上鉤。', 'hooked' => json_encode(['emoji' => '🎣🎣', 'title' => '另一門鉤也中了！', 'desc' => '收線途中另一門鉤也中魚：可拉 2 條、每條各自判定（含鄰近遞補）。', 'flavor' => '雙竿齊沉，今天海神眷顧。']), 'count_low' => 6, 'count_mid' => 6, 'count_high' => 8, 'sort' => 1, 'created_at' => $now, 'updated_at' => $now],
             ['key' => 'tangle', 'emoji' => '🪢', 'title' => '跟夥伴纏線了', 'description' => '協作失誤：與離你最近的夥伴魚線纏繞，雙方皆無漁獲。擲骰未達 3，兩人一起休息一回合。', 'flavor' => '站得越近，線越容易繞在一起。', 'hooked' => json_encode(['emoji' => '🪢', 'title' => '魚拖著線纏住夥伴！', 'desc' => '上鉤的魚亂竄，把線拖進離你最近的夥伴那裡——魚跑了，雙方皆無漁獲。擲骰未達 3，兩人一起休息一回合。', 'flavor' => '大魚一發力，兩個人的線全亂了。']), 'count_low' => 1, 'count_mid' => 1, 'count_high' => 1, 'sort' => 2, 'created_at' => $now, 'updated_at' => $now],
@@ -90,7 +90,7 @@ class GameDataSeeder extends Seeder
             ['key' => 'snag', 'emoji' => '🪨', 'title' => '釣到地球（底礁）', 'description' => '設備損壞：本次行動結束，下回合需休息處理線組。', 'flavor' => '魚鉤被礁石卡住了。', 'hooked' => json_encode(['emoji' => '🪨', 'title' => '魚鑽進礁石縫！', 'desc' => '上鉤的魚鑽進礁縫把線卡死：本次行動結束，下回合需休息處理線組。', 'flavor' => '老釣手都知道，讓魚鑽了洞就只能斷線。']), 'count_low' => 1, 'count_mid' => 1, 'count_high' => 0, 'sort' => 5, 'created_at' => $now, 'updated_at' => $now],
         ]);
 
-        DB::table('env_cards')->insert([
+        DB::table('env_cards')->insertOrIgnore([
             ['key' => 'calm', 'emoji' => '🌅', 'title' => '風平浪靜', 'description' => '無事發生，下一回合大家都正常釣魚。', 'flavor' => '海洋寬容的一面，適合釣魚。', 'card_count' => 5, 'sort' => 0, 'created_at' => $now, 'updated_at' => $now],
             ['key' => 'eel', 'emoji' => '🐍', 'title' => '海鰻偷襲', 'description' => '海鰻爬上岸偷水窪的漁獲！每位玩家擲骰，小於 3 損失 1 條放回補充堆。', 'flavor' => '趁大家盯著海面，牠從岩縫溜了上來。', 'card_count' => 2, 'sort' => 1, 'created_at' => $now, 'updated_at' => $now],
             ['key' => 'escape', 'emoji' => '🐟💨', 'title' => '奮力逃脫', 'description' => '水窪裡的魚奮力跳出！每位玩家擲骰，小於 3 損失 1 條放回補充堆。', 'flavor' => '魚池的魚奮力逃出水池，游回大海。', 'card_count' => 2, 'sort' => 2, 'created_at' => $now, 'updated_at' => $now],
@@ -100,7 +100,7 @@ class GameDataSeeder extends Seeder
             ['key' => 'chat', 'emoji' => '💬', 'title' => '風平浪靜，聊聊天吧', 'description' => '全員同步休息一回合。', 'flavor' => '海邊的閒聊，也是文化的傳承。', 'card_count' => 1, 'sort' => 6, 'created_at' => $now, 'updated_at' => $now],
         ]);
 
-        DB::table('game_settings')->insert([
+        DB::table('game_settings')->insertOrIgnore([
             ['key' => 'rounds', 'value' => json_encode(15), 'description' => '遊戲總回合數', 'created_at' => $now, 'updated_at' => $now],
             ['key' => 'collective_goal', 'value' => json_encode(21), 'description' => '全體漁獲集體目標', 'created_at' => $now, 'updated_at' => $now],
             ['key' => 'spot_positions', 'value' => json_encode([[0.13, 0.665], [0.375, 0.695], [0.615, 0.655], [0.235, 0.475], [0.5, 0.435], [0.765, 0.41]]), 'description' => '六個隱藏機率區座標比例 [x,y]', 'created_at' => $now, 'updated_at' => $now],
