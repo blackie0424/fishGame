@@ -34,7 +34,7 @@ export function drawPixFisher(g,x,gy,rodAng,lean,active,name,walkFrame,st){
 }
 
 export function drawFish(canvas, species, scale) {
-  const [name,, diff] = species;
+  const { name, diff } = species;
   const A = getFishArt(name);
   const W = 18, H = 12, s = scale;
   canvas.width = W * s; canvas.height = H * s;
