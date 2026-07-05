@@ -7,7 +7,7 @@
 <title>蘭嶼釣魚趣 — 達悟族捕魚桌遊</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{{ asset('game/game.css') }}?v={{ filemtime(public_path('game/game.css')) }}">
+@vite(['resources/game/game.css', 'resources/game/game.js'])
 </head>
 <body>
 
@@ -186,6 +186,5 @@
   <div class="pixel-panel" style="padding:22px 28px; font-size:18px; font-weight:900;" id="toast-text"></div>
 </div>
 
-<script type="module" src="{{ asset('game/game.js') }}?v={{ filemtime(public_path('game/game.js')) }}"></script>
 </body>
 </html>

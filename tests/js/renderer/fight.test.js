@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { startFight } from '../../../public/game/renderer/fight.js';
+import { startFight } from '../../../resources/game/renderer/fight.js';
 
 vi.stubGlobal('requestAnimationFrame', () => {});
 

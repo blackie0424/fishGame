@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { shuffle, rnd, buildFishSupply, buildActionDeck, buildDestinyDeck, buildEnvDeck } from '../../../public/game/utils/deck.js';
-import { FISH_SPECIES } from '../../../public/game/data/fish.js';
-import { SITE_CARDS } from '../../../public/game/data/sites.js';
-import { ENV_COUNTS } from '../../../public/game/data/cards.js';
+import { shuffle, rnd, buildFishSupply, buildActionDeck, buildDestinyDeck, buildEnvDeck } from '../../../resources/game/utils/deck.js';
+import { FISH_SPECIES } from '../../../resources/game/data/fish.js';
+import { SITE_CARDS } from '../../../resources/game/data/sites.js';
+import { ENV_COUNTS } from '../../../resources/game/data/cards.js';
 
 const lowSite  = SITE_CARDS.find(s => s.rule === 'gte' && s.total >= 10);
 const midSite  = SITE_CARDS.find(s => s.rule === 'gte' && s.total < 10);

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { FISH_SPECIES, TARGET_SET } from '../../../public/game/data/fish.js';
+import { FISH_SPECIES, TARGET_SET } from '../../../resources/game/data/fish.js';
 
 describe('FISH_SPECIES', () => {
   it('共 52 張魚牌', () => {

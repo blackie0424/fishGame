@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { pickBannedSpots, siteCaps, boardHasFish, refillBoard } from '../../../public/game/utils/board.js';
+import { pickBannedSpots, siteCaps, boardHasFish, refillBoard } from '../../../resources/game/utils/board.js';
 
 const mkSite = (over = {}) => ({ name: 't', rule: 'gte', banned: [], total: 10, ...over });
 const mkFish = n => Array.from({ length: n }, (_, i) => ({ name: `f${i}`, diff: (i % 5) + 1 }));

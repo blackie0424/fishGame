@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { ROLES } from '../../../public/game/data/roles.js';
-import { TARGET_SET } from '../../../public/game/data/fish.js';
+import { ROLES } from '../../../resources/game/data/roles.js';
+import { TARGET_SET } from '../../../resources/game/data/fish.js';
 
 describe('ROLES', () => {
   it('共 5 種角色', () => {

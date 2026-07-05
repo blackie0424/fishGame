@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { createGameState, refillSpots, applyFishCaught, applyFishEscape, applyPlayerRest, advanceTurn } from '../../../public/game/state/GameState.js';
-import { SITE_CARDS } from '../../../public/game/data/sites.js';
-import { FISH_SPECIES } from '../../../public/game/data/fish.js';
-import { ROLES } from '../../../public/game/data/roles.js';
+import { createGameState, refillSpots, applyFishCaught, applyFishEscape, applyPlayerRest, advanceTurn } from '../../../resources/game/state/GameState.js';
+import { SITE_CARDS } from '../../../resources/game/data/sites.js';
+import { FISH_SPECIES } from '../../../resources/game/data/fish.js';
+import { ROLES } from '../../../resources/game/data/roles.js';
 
 const lowSite  = SITE_CARDS.find(s => s.rule === 'gte' && s.total >= 10);
 const highSite = SITE_CARDS.find(s => s.rule === 'gt');

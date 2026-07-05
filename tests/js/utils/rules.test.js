@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { siteTier, fishPass, fishAuto, fishNeedText } from '../../../public/game/utils/rules.js';
-import { SITE_CARDS } from '../../../public/game/data/sites.js';
+import { siteTier, fishPass, fishAuto, fishNeedText } from '../../../resources/game/utils/rules.js';
+import { SITE_CARDS } from '../../../resources/game/data/sites.js';
 
 const siteGte10 = SITE_CARDS.find(s => s.rule === 'gte' && s.total >= 10); // low
 const siteGte7  = SITE_CARDS.find(s => s.rule === 'gte' && s.total < 10);  // mid

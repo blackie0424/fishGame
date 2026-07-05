@@ -3,7 +3,7 @@ import {
   ACTION_MIX, ACTION_INFO,
   DESTINY_CARDS, DESTINY_MIX,
   ENV_COUNTS, ENV_INFO,
-} from '../../../public/game/data/cards.js';
+} from '../../../resources/game/data/cards.js';
 
 describe('ACTION_MIX', () => {
   it('每個難度等級總張數都是 24', () => {

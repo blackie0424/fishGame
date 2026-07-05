@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { drawSeaBands, drawFishShadow, drawRockRight, tickDrops } from '../../../public/game/renderer/scene.js';
+import { drawSeaBands, drawFishShadow, drawRockRight, tickDrops } from '../../../resources/game/renderer/scene.js';
 
 function mockCtx() {
   return {

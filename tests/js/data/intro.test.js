@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { INTRO_SCENES } from '../../../public/game/data/intro.js';
+import { INTRO_SCENES } from '../../../resources/game/data/intro.js';
 
 const VALID_SCENES = new Set(['dawn','elder','family','share','depart']);
 

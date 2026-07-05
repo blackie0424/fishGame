@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { getDefaultArt, getFishArt } from '../../../public/game/renderer/sprites.js';
-import { FISH_ART } from '../../../public/game/data/fishArt.js';
-import { FISH_SPECIES } from '../../../public/game/data/fish.js';
+import { getDefaultArt, getFishArt } from '../../../resources/game/renderer/sprites.js';
+import { FISH_ART } from '../../../resources/game/data/fishArt.js';
+import { FISH_SPECIES } from '../../../resources/game/data/fish.js';
 
 describe('getFishArt', () => {
   it('已知魚種回傳 FISH_ART 中的設定', () => {

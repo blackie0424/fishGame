@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
-import { applyServerConfig } from '../../../public/game/config/serverConfig.js';
-import { FISH_SPECIES } from '../../../public/game/data/fish.js';
-import { SITE_CARDS } from '../../../public/game/data/sites.js';
-import { buildFishSupply } from '../../../public/game/utils/deck.js';
+import { applyServerConfig } from '../../../resources/game/config/serverConfig.js';
+import { FISH_SPECIES } from '../../../resources/game/data/fish.js';
+import { SITE_CARDS } from '../../../resources/game/data/sites.js';
+import { buildFishSupply } from '../../../resources/game/utils/deck.js';
 
 /* 「水域沒有魚」回歸測試（歷史：commit 70f1108）
    後台設定套用後，FISH_SPECIES 必須是物件格式且 count>0，

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { FISH_ART } from '../../../public/game/data/fishArt.js';
-import { FISH_SPECIES } from '../../../public/game/data/fish.js';
+import { FISH_ART } from '../../../resources/game/data/fishArt.js';
+import { FISH_SPECIES } from '../../../resources/game/data/fish.js';
 
 const VALID_SHAPES = new Set(['oval', 'long', 'deep']);
 const VALID_PATS   = new Set(['plain', 'spots', 'bars', 'hline']);
