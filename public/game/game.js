@@ -800,7 +800,7 @@ function playIntro(){
         }
         // 目標字樣
         g.fillStyle="rgba(245,197,66,.95)"; g.font="bold 22px 'Press Start 2P',monospace";
-        g.fillText("15 ROUNDS / 21 FISH", W/2-176, hz*.5+Math.sin(t/40)*3);
+        g.fillText(`${CFG.rounds} ROUNDS / ${CFG.goal} FISH`, W/2-176, hz*.5+Math.sin(t/40)*3);
       }
     }
     function renderText(){
@@ -871,10 +871,10 @@ async function launchGame(){
     activeBanned: new Set(),
     busy: false,
   });
+  // 集體目標 = 所有角色最低需求加總
+  CFG.goal = playerData.reduce((sum, p) => sum + (p.role.need || 0), 0);
   pickBannedSpots();
-  console.info("[DEBUG] FISH_SPECIES 數量:", FISH_SPECIES.length, "| fishSupply:", G.fishSupply.length, "| site.total:", site.total, "| activeBanned:", [...G.activeBanned]);
   refillSpots();
-  console.info("[DEBUG] refillSpots 後 spots:", G.spots.map(s=>s.length));
   // 岸上小人 = 每位玩家（沿著礁岩排開）
   FISHERS.length=0;
   const bc=$("#sea-canvas");
@@ -888,7 +888,7 @@ async function launchGame(){
            u:r.id===0?3:4 } });                                     // 小孩體型較小
   }
   $("#log").innerHTML="";
-  addLog(`🎣 釣魚去！今天的釣場：<b>📍 ${G.site.name}</b> — ${G.site.desc}（場上共 ${G.site.total} 張魚牌）15 回合內全體目標 21 條魚。`,"lg-sys");
+  addLog(`🎣 釣魚去！今天的釣場：<b>📍 ${G.site.name}</b> — ${G.site.desc}（場上共 ${G.site.total} 張魚牌）${CFG.rounds} 回合內全體目標 ${CFG.goal} 條魚。`,"lg-sys");
   renderPlayers();
   showScreen("#screen-game");
   nextTurn();
