@@ -872,7 +872,9 @@ async function launchGame(){
     busy: false,
   });
   pickBannedSpots();
+  console.info("[DEBUG] FISH_SPECIES 數量:", FISH_SPECIES.length, "| fishSupply:", G.fishSupply.length, "| site.total:", site.total, "| activeBanned:", [...G.activeBanned]);
   refillSpots();
+  console.info("[DEBUG] refillSpots 後 spots:", G.spots.map(s=>s.length));
   // 岸上小人 = 每位玩家（沿著礁岩排開）
   FISHERS.length=0;
   const bc=$("#sea-canvas");
