@@ -86,6 +86,8 @@ export function applyServerConfig(cfg, hooks = {}) {
     if (st.collective_goal) CFG.goal = +st.collective_goal;
     if (st.random_fish_ratio != null) CFG.randomFishRatio = +st.random_fish_ratio;
     if (st.bgm_speedup_round) CFG.bgmSpeedRound = +st.bgm_speedup_round;
+    if (st.low_fish_bias != null) CFG.lowFishBias = +st.low_fish_bias;
+    if (st.target_fish_weight != null) CFG.targetFishWeight = +st.target_fish_weight;
     if (st.spot_positions && st.spot_positions.length === 6 && hooks.setSpotPos) hooks.setSpotPos(st.spot_positions);
     console.info("[遊戲設定] 已套用 Laravel 後台設定");
     return true;

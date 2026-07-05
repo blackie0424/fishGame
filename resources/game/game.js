@@ -19,7 +19,8 @@ import { INTRO_SCENES } from './data/intro.js';
 import { startFight } from './renderer/fight.js';
 
 /* ---------------- 動態遊戲參數（可由 Laravel 後台調整） ---------------- */
-let CFG={rounds:15, goal:21, randomFishRatio:.35, bgmSpeedRound:10};
+let CFG={rounds:15, goal:21, randomFishRatio:.35, bgmSpeedRound:10,
+         lowFishBias:1.7, targetFishWeight:.35};   // 魚種權重：低難度魚增量、目標魚減量（後台可調）
 
 /* 場地縮圖：以浪高、礁石、急流、氛圍呈現環境，玩家從畫面與敘述自行判斷 */
 function siteThumb(card,w=150,h=84){
@@ -176,7 +177,8 @@ rebuildSpeciesIndex();
 function refillSpots(log=false){
   G.spotCap=siteCaps();
   refillBoard({ spots:G.spots, fishSupply:G.fishSupply, spotCap:G.spotCap,
-                activeBanned:G.activeBanned, randomFishRatio:CFG.randomFishRatio });
+                activeBanned:G.activeBanned, randomFishRatio:CFG.randomFishRatio,
+                lowFishBias:CFG.lowFishBias, targetFishWeight:CFG.targetFishWeight, targetSet:TARGET_SET });
   if(log) addLog("補充魚牌：各點位已補滿。","lg-sys");
   renderSpots();
 }

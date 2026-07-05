@@ -72,3 +72,64 @@ describe('boardHasFish', () => {
     expect(boardHasFish([[], [], [], [], [], []], new Set())).toBe(false);
   });
 });
+
+/* ============ 魚種出現機率權重（2026-07-05 難度調整） ============ */
+import { fishWeight } from '../../../resources/game/utils/board.js';
+
+describe('fishWeight', () => {
+  it('中性參數（bias=1, weight=1）→ 所有魚權重為 1', () => {
+    for (const diff of [1, 2, 3, 4, 5]) {
+      expect(fishWeight({ name: 'x', diff })).toBe(1);
+    }
+  });
+  it('lowFishBias=2 → 每低一級難度權重加倍（diff1 = diff5 的 16 倍）', () => {
+    const opt = { lowFishBias: 2 };
+    expect(fishWeight({ name: 'x', diff: 1 }, opt)).toBe(16);
+    expect(fishWeight({ name: 'x', diff: 4 }, opt)).toBe(2);
+    expect(fishWeight({ name: 'x', diff: 5 }, opt)).toBe(1);
+  });
+  it('目標魚額外乘 targetFishWeight', () => {
+    const opt = { lowFishBias: 2, targetFishWeight: 0.5, targetSet: new Set(['Ilek']) };
+    expect(fishWeight({ name: 'Ilek', diff: 5 }, opt)).toBe(0.5);
+    expect(fishWeight({ name: 'Arawa', diff: 5 }, opt)).toBe(1);
+  });
+});
+
+describe('refillBoard 權重抽選', () => {
+  const fill = extra => {
+    const spots = [[], [], [], [], [], []];
+    const activeBanned = new Set();
+    const spotCap = siteCaps(mkSite({ total: 10 }), activeBanned);
+    refillBoard({ spots, fishSupply: extra.fishSupply, spotCap, activeBanned,
+                  randomFishRatio: extra.randomFishRatio ?? 1, ...extra });
+    return spots.flat();
+  };
+  it('targetFishWeight=0 → 非目標魚充足時，場上不出現目標魚', () => {
+    const targetSet = new Set(['Ilek']);
+    const fishSupply = [
+      ...Array.from({ length: 20 }, (_, i) => ({ name: `n${i}`, diff: (i % 5) + 1 })),
+      ...Array.from({ length: 20 }, () => ({ name: 'Ilek', diff: 5 })),
+    ];
+    const placed = fill({ fishSupply, targetFishWeight: 0, targetSet });
+    expect(placed.length).toBe(10);
+    expect(placed.some(f => f.name === 'Ilek')).toBe(false);
+  });
+  it('魚庫只剩目標魚且權重 0 → 均勻 fallback，仍能補滿不卡死', () => {
+    const targetSet = new Set(['Ilek']);
+    const fishSupply = Array.from({ length: 12 }, () => ({ name: 'Ilek', diff: 5 }));
+    const placed = fill({ fishSupply, targetFishWeight: 0, targetSet });
+    expect(placed.length).toBe(10);
+  });
+  it('lowFishBias 極大 → 低難度魚優先佔滿場面', () => {
+    const fishSupply = [
+      ...Array.from({ length: 10 }, (_, i) => ({ name: `lo${i}`, diff: 1 })),
+      ...Array.from({ length: 30 }, (_, i) => ({ name: `hi${i}`, diff: 5 })),
+    ];
+    const placed = fill({ fishSupply, lowFishBias: 1e9 });
+    expect(placed.filter(f => f.diff === 1).length).toBe(10);
+  });
+  it('不傳權重參數 → 與既有行為相容（能正常補滿）', () => {
+    const placed = fill({ fishSupply: mkFish(52), randomFishRatio: 0.35 });
+    expect(placed.length).toBe(10);
+  });
+});

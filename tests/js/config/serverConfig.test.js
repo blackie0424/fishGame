@@ -64,6 +64,18 @@ describe('applyServerConfig — settings 與錯誤處理', () => {
     expect(store.randomFishRatio).toBe(0.5);
     expect(setPos).toHaveBeenCalledWith([1, 2, 3, 4, 5, 6]);
   });
+  it('魚種權重設定寫入 cfgStore（low_fish_bias / target_fish_weight）', () => {
+    const store = { lowFishBias: 1.7, targetFishWeight: .35 };
+    applyServerConfig({ settings: { low_fish_bias: '2.2', target_fish_weight: '0.2' } }, { cfgStore: store });
+    expect(store.lowFishBias).toBe(2.2);
+    expect(store.targetFishWeight).toBe(0.2);
+  });
+  it('權重設定缺值時保留原值（含 0 值可設定）', () => {
+    const store = { lowFishBias: 1.7, targetFishWeight: .35 };
+    applyServerConfig({ settings: { target_fish_weight: 0 } }, { cfgStore: store });
+    expect(store.lowFishBias).toBe(1.7);
+    expect(store.targetFishWeight).toBe(0);
+  });
   it('cfg 為 null → 回傳 false、不拋例外（退回內建預設值）', () => {
     expect(applyServerConfig(null)).toBe(false);
   });

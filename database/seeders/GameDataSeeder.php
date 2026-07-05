@@ -106,6 +106,8 @@ class GameDataSeeder extends Seeder
             ['key' => 'spot_positions', 'value' => json_encode([[0.13, 0.665], [0.375, 0.695], [0.615, 0.655], [0.235, 0.475], [0.5, 0.435], [0.765, 0.41]]), 'description' => '六個隱藏機率區座標比例 [x,y]', 'created_at' => $now, 'updated_at' => $now],
             ['key' => 'random_fish_ratio', 'value' => json_encode(0.35), 'description' => '補魚時完全隨機比例', 'created_at' => $now, 'updated_at' => $now],
             ['key' => 'bgm_speedup_round', 'value' => json_encode(10), 'description' => '背景音樂開始加速的回合', 'created_at' => $now, 'updated_at' => $now],
+            ['key' => 'low_fish_bias', 'value' => json_encode(1.7), 'description' => '補魚權重：每低一級難度乘的倍率（1 = 不偏好）', 'created_at' => $now, 'updated_at' => $now],
+            ['key' => 'target_fish_weight', 'value' => json_encode(0.35), 'description' => '補魚權重：目標魚額外乘的倍率（1 = 不減量）', 'created_at' => $now, 'updated_at' => $now],
         ]);
 
     }

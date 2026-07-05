@@ -28,24 +28,46 @@ export function boardHasFish(spots, activeBanned) {
   return [0, 1, 2, 3, 4, 5].some(s => !activeBanned.has(s) && spots[s].length);
 }
 
+/** 補魚抽選權重（難度調整用，後台可調）：
+ *  - lowFishBias^(5 - diff)：難度越低權重越高（bias=1 中性）
+ *  - 目標魚（targetSet 內）再乘 targetFishWeight（=1 中性） */
+export function fishWeight(fish, { lowFishBias = 1, targetFishWeight = 1, targetSet = null } = {}) {
+  let w = Math.pow(lowFishBias, 5 - fish.diff);
+  if (targetSet && targetSet.has(fish.name)) w *= targetFishWeight;
+  return w;
+}
+
+/** 依權重自候選池挑一個 index；權重總和非正（全 0/NaN）→ 均勻 fallback，保證不卡死 */
+function weightedPick(weights) {
+  let sum = 0;
+  for (const w of weights) sum += w;
+  if (!(sum > 0)) return rnd(weights.length);
+  let r = Math.random() * sum;
+  for (let i = 0; i < weights.length; i++) { r -= weights[i]; if (r < 0) return i; }
+  return weights.length - 1;
+}
+
 /** 依難度分桶補魚：點位 s 優先抽 difficulty≈s 的魚。
- *  就地修改 spots 與 fishSupply（與原 game.js 行為一致）。 */
-export function refillBoard({ spots, fishSupply, spotCap, activeBanned, randomFishRatio }) {
+ *  就地修改 spots 與 fishSupply（與原 game.js 行為一致）。
+ *  權重參數（lowFishBias/targetFishWeight/targetSet）預設中性 = 舊行為。 */
+export function refillBoard({ spots, fishSupply, spotCap, activeBanned, randomFishRatio,
+                              lowFishBias = 1, targetFishWeight = 1, targetSet = null }) {
+  const wOpt = { lowFishBias, targetFishWeight, targetSet };
   for (let s = 0; s < 6; s++) {
     if (activeBanned.has(s)) { spots[s].length = 0; continue; }
     const want = Math.min(s + 1, 5);
     while (spots[s].length < spotCap[s] && fishSupply.length) {
       let bi;
-      if (Math.random() < randomFishRatio) {            // 完全隨機比例（後台可調）
-        bi = rnd(fishSupply.length);
-      } else {                                          // 其餘：偏好接近深度的魚，自候選中隨機挑
+      if (Math.random() < randomFishRatio) {            // 完全隨機比例（後台可調）：不看深度，但仍吃魚種權重
+        bi = weightedPick(fishSupply.map(f => fishWeight(f, wOpt)));
+      } else {                                          // 其餘：偏好接近深度的魚，候選池內依權重抽
         const cands = [];
         for (let i = 0; i < fishSupply.length; i++) {
           cands.push([i, Math.abs(fishSupply[i].diff - want)]);
         }
         cands.sort((a, b) => a[1] - b[1]);
         const pool = cands.slice(0, Math.min(6, cands.length));
-        bi = pool[rnd(pool.length)][0];
+        bi = pool[weightedPick(pool.map(([i]) => fishWeight(fishSupply[i], wOpt)))][0];
       }
       spots[s].push(fishSupply.splice(bi, 1)[0]);
     }
