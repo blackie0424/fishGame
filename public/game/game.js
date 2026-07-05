@@ -1801,7 +1801,7 @@ function applyServerConfig(cfg){
   try{
     if(cfg.fish&&cfg.fish.length){
       FISH_SPECIES.length=0;
-      FISH_SPECIES.push(...cfg.fish.map(f=>[f.name,f.card_count,f.difficulty,f.category,["#7fb2c9","#d8e8ef","#4a7f97"]]));
+      FISH_SPECIES.push(...cfg.fish.map(f=>({name:f.name,count:f.card_count,diff:f.difficulty,category:f.category,colors:["#7fb2c9","#d8e8ef","#4a7f97"]})));
       Object.keys(FISH_ART).forEach(k=>delete FISH_ART[k]);
       cfg.fish.forEach(f=>{ FISH_ART[f.name]=Object.assign({shape:"oval",pat:"plain"},f.art||{}); });
       rebuildSpeciesIndex();
