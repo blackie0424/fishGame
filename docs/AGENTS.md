@@ -103,4 +103,4 @@ php artisan view:clear            # blade 有改就要跑
 | c035682 | phase5：抽出 board/serverConfig 模組 + 18 個回歸測試 |
 | f00f159 | drawFish 改物件解構（phase1 格式事故餘波之一） |
 | 36431eb | 前端改 Vite 打包（hash 檔名），源碼移至 resources/game，根絕 stale cache |
-| d36b514 | renderPool 等 4 處 f.sp + 1 處 f.cat 舊格式殘留 → 開局卡死；回歸測試 drawFishContract.test.js |
+| e72c8a4 | renderPool 等 4 處 f.sp + 1 處 f.cat 舊格式殘留 → 開局卡死；回歸測試 drawFishContract.test.js |
