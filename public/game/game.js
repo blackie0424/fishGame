@@ -162,6 +162,7 @@ const G={
   fishSupply:[], actionDeck:[], envDeck:[],
   spots:[[],[],[],[],[],[]],
   spotCap:[3,3,3,3,2,2],
+  activeBanned: new Set(),
   discard:[],
   busy:false, over:false,
 };
@@ -220,7 +221,13 @@ async function toast(msg,ms=2000){ $("#toast-text").innerHTML=msg; $("#ov-toast"
 
 function needText(spot){ return G.site.rule==="gt" ? `骰出 > ${spot+1}` : `骰出 ≥ ${spot+1}`; }
 function passCheck(roll,spot){ return G.site.rule==="gt" ? roll>spot+1 : roll>=spot+1; }
-function isBanned(spot){ return G.site.banned.includes(spot+1); }   // banned 以 1~6 表示
+function isBanned(spot){ return G.activeBanned.has(spot); }
+/* 每回合隨機決定禁放點位：banned.length 決定數量，具體點位每回合重新抽 */
+function pickBannedSpots(){
+  const count=G.site.banned.length;
+  const all=shuffle([0,1,2,3,4,5]);
+  G.activeBanned=new Set(all.slice(0,count));
+}
 /* 依場地固定總張數，分配各點位容量（淺點位優先多放） */
 function siteCaps(){
   const caps=[0,0,0,0,0,0];
@@ -849,8 +856,10 @@ async function launchGame(){
   Object.assign(G, createGameState({ site, players: playerData }), {
     actionDeck: buildActionDeck(site),
     envDeck: buildEnvDeck(),
+    activeBanned: new Set(),
     busy: false,
   });
+  pickBannedSpots();
   refillSpots();
   // 岸上小人 = 每位玩家（沿著礁岩排開）
   FISHERS.length=0;
@@ -1632,6 +1641,11 @@ async function roundEnd(){
       break;
     }
   }
+  // 回合結束：重新隨機禁放點位，場上剩餘魚牌歸回補充堆，再重新補滿
+  pickBannedSpots();
+  G.spots.flat().forEach(f=>G.fishSupply.push(f));
+  G.fishSupply=shuffle(G.fishSupply);
+  G.spots=[[],[],[],[],[],[]];
   refillSpots(true);
   G.round++;
   renderPlayers();
