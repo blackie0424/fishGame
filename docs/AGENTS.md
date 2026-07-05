@@ -7,7 +7,7 @@
 
 以達悟（Tao）族傳統漁撈文化為主題的數位互動桌遊。雙層架構：
 
-- **前端**：HTML5 Canvas + 原生 JS（ES modules），像素風、回合制、AI 對手，位於 `public/game/`
+- **前端**：HTML5 Canvas + 原生 JS（ES modules），像素風、回合制、AI 對手，源碼位於 `resources/game/`，由 Vite 打包為 `public/build/assets/game-<hash>.js/.css`（blade 用 `@vite` 載入；**勿把 JS 放回 public/**）
 - **後端**：Laravel 12 + MySQL，後台 CRUD 動態管理所有遊戲資料（魚種/角色/場地/命運卡/行動卡/環境卡/設定），`/api/game-config` 供前端載入
 
 Repo：`github.com/blackie0424/fishGame`（main）
@@ -15,7 +15,7 @@ Repo：`github.com/blackie0424/fishGame`（main）
 ## 模組地圖（前端）
 
 ```
-public/game/
+resources/game/
 ├─ game.js              # 主流程：UI、回合、doFishing、endTurn（薄包裝層）
 ├─ data/                # 純資料（fish/sites/cards/roles/fishArt/intro）
 ├─ utils/
@@ -56,7 +56,8 @@ tests/js/               # vitest，13 檔 122+ 測試
 
 ```bash
 npm test                          # vitest 全套（改任何 js 前後都要跑）
-node --check public/game/game.js  # 語法檢查
+node --check resources/game/game.js  # 語法檢查
+npm run build                     # Vite 打包（部署管線會自動跑）
 php artisan migrate --seed        # 建表 + 種子資料（52 條魚、15 場地）
 php artisan view:clear            # blade 有改就要跑
 ```
@@ -81,8 +82,8 @@ php artisan view:clear            # blade 有改就要跑
 
 1. 主機 `git pull origin main`
 2. `php artisan view:clear`（blade 有改時）；改過遊戲資料則後台任存一筆或 `php artisan cache:clear`（`/api/game-config` 用 `rememberForever` 快取）
-3. 驗明正身：`curl -s https://主機/game/game.js | grep -c 'ensureBoardHasFish'` 應為 1
-4. 瀏覽器硬重整一次（資產已有 `?v=filemtime`，之後不需要）
+3. 驗明正身：`curl -s https://主機/ | grep -o 'build/assets/game-[^"]*'`，hash 應與本次 build 一致
+4. 資產檔名帶內容 hash，瀏覽器**不需**硬重整（HTML 本身 no-cache）
 
 ## 除錯 SOP（本專案血淚驗證）
 
@@ -100,3 +101,6 @@ php artisan view:clear            # blade 有改就要跑
 | 70f1108 | 修復陣列映射（「水域沒有魚」100% 事故主因） |
 | f514afb | 遞補可回補魚庫 + card_count 防呆 + 資產版本參數 |
 | c035682 | phase5：抽出 board/serverConfig 模組 + 18 個回歸測試 |
+| f00f159 | drawFish 改物件解構（phase1 格式事故餘波之一） |
+| 36431eb | 前端改 Vite 打包（hash 檔名），源碼移至 resources/game，根絕 stale cache |
+| d36b514 | renderPool 等 4 處 f.sp + 1 處 f.cat 舊格式殘留 → 開局卡死；回歸測試 drawFishContract.test.js |

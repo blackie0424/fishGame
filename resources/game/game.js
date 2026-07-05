@@ -243,7 +243,7 @@ function renderPool(){
       const d=document.createElement("div");
       d.className="pf"+(TARGET_SET.has(f.name)?" tgt":"")+(total>__lastPool?" new":"");
       d.title=`${f.name}（${p.name} 釣獲）`;
-      d.appendChild(fishCanvas(f.sp,2));
+      d.appendChild(fishCanvas(f,2));
       const i=document.createElement("i"); i.textContent=p.name.slice(0,1); d.appendChild(i);
       box.appendChild(d);
     });
@@ -1506,7 +1506,7 @@ function rollDice(p,needStr,passFn,opts={}){
     $("#dice-need").textContent=needStr;
     const fi=$("#dice-fish"); fi.innerHTML="";
     if(opts.fish){ fi.style.display="flex";
-      fi.appendChild(fishCanvas(opts.fish.sp,5));
+      fi.appendChild(fishCanvas(opts.fish,5));
       const b=document.createElement("b"); b.textContent=opts.fish.name+(TARGET_SET.has(opts.fish.name)?" ⭐":""); fi.appendChild(b);
     } else fi.style.display="none";
     $("#dice-result").textContent=""; $("#dice-result").className="";
@@ -1575,8 +1575,8 @@ function showCatch(p,fishes,title){
     const box=$("#catch-fish-show"); box.innerHTML="";
     fishes.forEach(f=>{
       const d=document.createElement("div"); d.className="bigfish";
-      d.innerHTML=`<div class="fname">${f.name}</div><div class="fcat">${f.cat}${TARGET_SET.has(f.name)?" ・⭐ 目標魚":""}</div>`;
-      d.prepend(fishCanvas(f.sp,7));
+      d.innerHTML=`<div class="fname">${f.name}</div><div class="fcat">${f.category}${TARGET_SET.has(f.name)?" ・⭐ 目標魚":""}</div>`;
+      d.prepend(fishCanvas(f,7));
       box.appendChild(d);
     });
     const ov=$("#ov-catch"); ov.classList.add("show");
@@ -1773,7 +1773,7 @@ function playShareScene(transfers){
         const tr=transfers[step];
         const fi=G.players.indexOf(tr.from), ti=G.players.indexOf(tr.to);
         caption(`🧓 耆老拿起 <b style="color:var(--sun)">${tr.fish.name}</b>：<br>「${tr.from.name}，你的魚簍有餘。這條${tr.why==="target"?`正是 <b>${tr.to.role.name}</b> 家裡需要的魚`:"分給還不夠的人"}——<br>${tr.to.name}，拿去吧。」`);
-        flying={cv:fishCanvas(tr.fish.sp,5), t:0,
+        flying={cv:fishCanvas(tr.fish,5), t:0,
           x0:pX[fi], y0:groundY-40, x1:pX[ti], y1:groundY-40};
         SFX.flip();
         return;
