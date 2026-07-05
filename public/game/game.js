@@ -1077,8 +1077,13 @@ async function doFishing(p,spot){
       addLog(`${p.name} 釣到底礁，設備損壞，下回合休息。`,"lg-bad");
       break;
     case "swallow":{
-      if(G.spots[spot].length){
-        const f=G.spots[spot].splice(rnd(G.spots[spot].length),1)[0];
+      let swSrc=spot;
+      if(!G.spots[swSrc].length){
+        const nb=[spot-1,spot+1].filter(s2=>s2>=0&&s2<6&&!isBanned(s2)&&G.spots[s2].length);
+        if(nb.length){ swSrc=nb[rnd(nb.length)]; addLog(`啟動「鄰近遞補」：由鄰近水域補上一條！`,"lg-sys"); }
+      }
+      if(G.spots[swSrc].length){
+        const f=G.spots[swSrc].splice(rnd(G.spots[swSrc].length),1)[0];
         p.catch.push(f); p.rest=1;
         SFX.good(); splashFX();
         await showCatch(p,[f],"吞鉤穩拿！但下回合要休息");
@@ -1104,14 +1109,16 @@ async function doFishing(p,spot){
     }
     case "hit": case "double":{
       const take=card==="double"?2:1;
-      if(!G.spots[spot].length){ await toast("這片水域沒有魚⋯"); addLog(`${p.name} 的水域空空如也。`,"lg-bad"); break; }
       const wantN=Math.min(2, take + (destiny.flags.double?1:0));   // 上限 2 條
       const got=[];
       for(let k=0;k<wantN;k++){
         let src=spot;
         if(!G.spots[src].length){
           const nb=[spot-1,spot+1].filter(s2=>s2>=0&&s2<6&&!isBanned(s2)&&G.spots[s2].length);
-          if(!nb.length) break;
+          if(!nb.length){
+            if(k===0){ await toast("這片水域沒有魚⋯"); addLog(`${p.name} 的水域空空如也。`,"lg-bad"); }
+            break;
+          }
           src=nb[rnd(nb.length)];
           addLog(`啟動「鄰近遞補」：由鄰近水域補上一條！`,"lg-sys");
         }
