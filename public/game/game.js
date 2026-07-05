@@ -6,13 +6,15 @@
 import { FISH_SPECIES, TARGET_SET } from './data/fish.js';
 import { SITE_CARDS } from './data/sites.js';
 import { ROLES } from './data/roles.js';
-import { ACTION_MIX, ACTION_INFO, DESTINY_CARDS, DESTINY_MIX, ENV_COUNTS, ENV_INFO } from './data/cards.js';
+import { ACTION_INFO, ENV_INFO } from './data/cards.js';
 import { shuffle, rnd, buildFishSupply, buildActionDeck, buildDestinyDeck, buildEnvDeck } from './utils/deck.js';
 import { siteTier, fishPass, fishAuto, fishNeedText } from './utils/rules.js';
 import { FISH_ART } from './data/fishArt.js';
 import { drawFish, drawAvatar, getFishArt, drawPixFisher } from './renderer/sprites.js';
 import { drawSeaBands, drawFishShadow, drawRockRight, tickDrops } from './renderer/scene.js';
 import { createGameState, advanceTurn } from './state/GameState.js';
+import { pickBannedSpots as pickBanned, siteCaps as calcSiteCaps, boardHasFish as hasBoardFish, refillBoard } from './utils/board.js';
+import { applyServerConfig as applyCfg } from './config/serverConfig.js';
 import { INTRO_SCENES } from './data/intro.js';
 import { startFight } from './renderer/fight.js';
 
@@ -170,34 +172,16 @@ let speciesByName={};
 function rebuildSpeciesIndex(){ speciesByName={}; FISH_SPECIES.forEach(sp=>speciesByName[sp.name]=sp); }
 rebuildSpeciesIndex();
 
-/* 依難度分桶補魚：點位 s 優先抽 difficulty≈s 的魚 */
+/* 依難度分桶補魚：純邏輯已抽至 utils/board.js（refactor phase5） */
 function refillSpots(log=false){
   G.spotCap=siteCaps();
-  for(let s=0;s<6;s++){
-    if(isBanned(s)){ G.spots[s]=[]; continue; }
-    const want=Math.min(s+1,5);
-    while(G.spots[s].length<G.spotCap[s] && G.fishSupply.length){
-      let bi;
-      if(Math.random()<CFG.randomFishRatio){          // 完全隨機比例（後台可調） → 任何水域都可能出現任何魚
-        bi=rnd(G.fishSupply.length);
-      }else{                                          // 65%：偏好接近深度的魚，但從候選中隨機挑
-        const cands=[];
-        for(let i=0;i<G.fishSupply.length;i++){
-          const d=Math.abs(G.fishSupply[i].diff-want);
-          cands.push([i,d]);
-        }
-        cands.sort((a,b)=>a[1]-b[1]);
-        const pool=cands.slice(0,Math.min(6,cands.length)); // 最接近的 6 張中隨機
-        bi=pool[rnd(pool.length)][0];
-      }
-      G.spots[s].push(G.fishSupply.splice(bi,1)[0]);
-    }
-  }
+  refillBoard({ spots:G.spots, fishSupply:G.fishSupply, spotCap:G.spotCap,
+                activeBanned:G.activeBanned, randomFishRatio:CFG.randomFishRatio });
   if(log) addLog("補充魚牌：各點位已補滿。","lg-sys");
   renderSpots();
 }
 /* 場上（未禁放點位）是否還有魚 */
-function boardHasFish(){ return [0,1,2,3,4,5].some(s=>!isBanned(s)&&G.spots[s].length); }
+function boardHasFish(){ return hasBoardFish(G.spots, G.activeBanned); }
 /* 場面全空但魚庫（補充堆）還有魚 → 立刻從魚庫補滿場面。
    只有連魚庫都空了（近終局，52 條幾乎都被釣走）才會真的無魚可補。
    修正：舊版遞補只在場上 6 個點位之間搬魚，抓乾後即誤報「沒有魚」，
@@ -233,20 +217,9 @@ async function toast(msg,ms=2000){ $("#toast-text").innerHTML=msg; $("#ov-toast"
 function needText(spot){ return G.site.rule==="gt" ? `骰出 > ${spot+1}` : `骰出 ≥ ${spot+1}`; }
 function passCheck(roll,spot){ return G.site.rule==="gt" ? roll>spot+1 : roll>=spot+1; }
 function isBanned(spot){ return G.activeBanned.has(spot); }
-/* 每回合隨機決定禁放點位：banned.length 決定數量，具體點位每回合重新抽 */
-function pickBannedSpots(){
-  const count=G.site.banned.length;
-  const all=shuffle([0,1,2,3,4,5]);
-  G.activeBanned=new Set(all.slice(0,count));
-}
-/* 依場地固定總張數，分配各點位容量（淺點位優先多放） */
-function siteCaps(){
-  const caps=[0,0,0,0,0,0];
-  const allowed=[0,1,2,3,4,5].filter(sp=>!isBanned(sp));
-  let left=G.site.total, i=0;
-  while(left>0){ caps[allowed[i%allowed.length]]++; left--; i++; }
-  return caps;
-}
+/* 每回合隨機決定禁放點位／容量分配：純邏輯已抽至 utils/board.js */
+function pickBannedSpots(){ G.activeBanned=pickBanned(G.site); }
+function siteCaps(){ return calcSiteCaps(G.site, G.activeBanned); }
 
 function renderSpots(){ syncShadows(); /* 點位為隱藏機率區：僅以隨機游動的魚影呈現 */ }
 
@@ -1858,55 +1831,13 @@ async function finishGame(){
    Laravel 後台動態設定：開局前自 /api/game-config 載入；失敗則用內建預設值
 ===================================================================== */
 function applyServerConfig(cfg){
-  try{
-    if(cfg.fish&&cfg.fish.length){
-      FISH_SPECIES.length=0;
-      FISH_SPECIES.push(...cfg.fish.map(f=>({name:f.name,count:(+f.card_count>0?+f.card_count:1),diff:f.difficulty,category:f.category,colors:["#7fb2c9","#d8e8ef","#4a7f97"]})));
-      Object.keys(FISH_ART).forEach(k=>delete FISH_ART[k]);
-      cfg.fish.forEach(f=>{ FISH_ART[f.name]=Object.assign({shape:"oval",pat:"plain"},f.art||{}); });
-      rebuildSpeciesIndex();
-    }
-    if(cfg.roles&&cfg.roles.length){
-      ROLES.length=0;
-      ROLES.push(...cfg.roles.map((r,i)=>({id:i,name:r.name,emoji:r.emoji||"🧑",need:r.need,
-        target:r.targets&&r.targets.length?r.targets:null,desc:r.description,skin:r.skin,cloth:r.cloth})));
-      TARGET_SET.clear();
-      [].concat(...cfg.roles.map(r=>r.targets||[])).forEach(t=>TARGET_SET.add(t));
-    }
-    if(cfg.sites&&cfg.sites.length){
-      SITE_CARDS.length=0;
-      SITE_CARDS.push(...cfg.sites.map(sc=>({name:sc.name,rule:sc.rule,banned:sc.banned||[],
-        total:sc.board_total,desc:sc.description,vis:sc.vis||{wave:0,rock:1,cur:0}})));
-    }
-    if(cfg.destiny&&cfg.destiny.length){
-      DESTINY_CARDS.length=0;
-      DESTINY_CARDS.push(...cfg.destiny.map(d=>({t:d.key,n:0,title:d.title,content:d.content,result:d.result,kind:d.kind})));
-      DESTINY_MIX.low={}; DESTINY_MIX.mid={}; DESTINY_MIX.high={};
-      cfg.destiny.forEach(d=>{ DESTINY_MIX.low[d.key]=d.count_low; DESTINY_MIX.mid[d.key]=d.count_mid; DESTINY_MIX.high[d.key]=d.count_high; });
-    }
-    if(cfg.actions&&cfg.actions.length){
-      Object.keys(ACTION_INFO).forEach(k=>delete ACTION_INFO[k]);
-      ACTION_MIX.low={}; ACTION_MIX.mid={}; ACTION_MIX.high={};
-      cfg.actions.forEach(a=>{
-        ACTION_INFO[a.key]={emoji:a.emoji||"",title:a.title,desc:a.description,flavor:a.flavor,
-          hooked:a.hooked?{emoji:a.hooked.emoji||"",title:a.hooked.title,desc:a.hooked.desc,flavor:a.hooked.flavor}:null};
-        ACTION_MIX.low[a.key]=a.count_low; ACTION_MIX.mid[a.key]=a.count_mid; ACTION_MIX.high[a.key]=a.count_high;
-      });
-    }
-    if(cfg.envs&&cfg.envs.length){
-      Object.keys(ENV_INFO).forEach(k=>delete ENV_INFO[k]);
-      Object.keys(ENV_COUNTS).forEach(k=>delete ENV_COUNTS[k]);
-      cfg.envs.forEach(e=>{ ENV_INFO[e.key]={animType:e.key,emoji:e.emoji||"",title:e.title,desc:e.description,flavor:e.flavor};
-        ENV_COUNTS[e.key]=e.card_count; });
-    }
-    const st=cfg.settings||{};
-    if(st.rounds) CFG.rounds=+st.rounds;
-    if(st.collective_goal) CFG.goal=+st.collective_goal;
-    if(st.random_fish_ratio!=null) CFG.randomFishRatio=+st.random_fish_ratio;
-    if(st.bgm_speedup_round) CFG.bgmSpeedRound=+st.bgm_speedup_round;
-    if(st.spot_positions&&st.spot_positions.length===6) SPOT_POS=st.spot_positions;
-    console.info("[遊戲設定] 已套用 Laravel 後台設定");
-  }catch(err){ console.warn("[遊戲設定] 套用失敗，使用內建預設值", err); }
+  /* 純邏輯已抽至 config/serverConfig.js（refactor phase5），
+     此處僅繫結遊戲端掛勾：CFG、SPOT_POS、魚種索引重建 */
+  applyCfg(cfg,{
+    cfgStore: CFG,
+    setSpotPos: v=>{ SPOT_POS=v; },
+    onFishChanged: rebuildSpeciesIndex,
+  });
 }
 async function loadServerConfig(){
   try{
