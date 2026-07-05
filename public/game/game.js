@@ -1100,8 +1100,12 @@ async function doFishing(p,spot){
     case "swallow":{
       let swSrc=spot;
       if(!G.spots[swSrc].length){
-        const nb=[spot-1,spot+1].filter(s2=>s2>=0&&s2<6&&!isBanned(s2)&&G.spots[s2].length);
-        if(nb.length){ swSrc=nb[rnd(nb.length)]; addLog(`啟動「鄰近遞補」：由鄰近水域補上一條！`,"lg-sys"); }
+        const nb=[0,1,2,3,4,5].filter(s2=>!isBanned(s2)&&G.spots[s2].length);
+        if(nb.length){
+          const near=nb.filter(s2=>Math.abs(s2-spot)===1);
+          swSrc=near.length?near[rnd(near.length)]:nb[rnd(nb.length)];
+          addLog(`啟動「鄰近遞補」：由鄰近水域補上一條！`,"lg-sys");
+        }
       }
       if(G.spots[swSrc].length){
         const f=G.spots[swSrc].splice(rnd(G.spots[swSrc].length),1)[0];
@@ -1135,12 +1139,14 @@ async function doFishing(p,spot){
       for(let k=0;k<wantN;k++){
         let src=spot;
         if(!G.spots[src].length){
-          const nb=[spot-1,spot+1].filter(s2=>s2>=0&&s2<6&&!isBanned(s2)&&G.spots[s2].length);
+          const nb=[0,1,2,3,4,5].filter(s2=>!isBanned(s2)&&G.spots[s2].length);
           if(!nb.length){
             if(k===0){ await toast("這片水域沒有魚⋯"); addLog(`${p.name} 的水域空空如也。`,"lg-bad"); }
             break;
           }
-          src=nb[rnd(nb.length)];
+          // 優先找最近的點位，其次全域隨機
+          const near=nb.filter(s2=>Math.abs(s2-spot)===1);
+          src=near.length?near[rnd(near.length)]:nb[rnd(nb.length)];
           addLog(`啟動「鄰近遞補」：由鄰近水域補上一條！`,"lg-sys");
         }
         const f=G.spots[src].splice(rnd(G.spots[src].length),1)[0];
