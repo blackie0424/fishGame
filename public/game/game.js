@@ -196,6 +196,17 @@ function refillSpots(log=false){
   if(log) addLog("補充魚牌：各點位已補滿。","lg-sys");
   renderSpots();
 }
+/* 場上（未禁放點位）是否還有魚 */
+function boardHasFish(){ return [0,1,2,3,4,5].some(s=>!isBanned(s)&&G.spots[s].length); }
+/* 場面全空但魚庫（補充堆）還有魚 → 立刻從魚庫補滿場面。
+   只有連魚庫都空了（近終局，52 條幾乎都被釣走）才會真的無魚可補。
+   修正：舊版遞補只在場上 6 個點位之間搬魚，抓乾後即誤報「沒有魚」，
+   卻忽略魚庫中通常還有 30～40 條未上場的魚。 */
+function ensureBoardHasFish(){
+  if(boardHasFish()) return true;
+  if(G.fishSupply.length){ refillSpots(); return boardHasFish(); }
+  return false;
+}
 function reshuffleBoard(){
   let all=G.spots.flat(); G.spots=[[],[],[],[],[],[]];
   all=shuffle(all);
@@ -1102,11 +1113,15 @@ async function doFishing(p,spot){
     case "swallow":{
       let swSrc=spot;
       if(!G.spots[swSrc].length){
-        const nb=[0,1,2,3,4,5].filter(s2=>!isBanned(s2)&&G.spots[s2].length);
+        let nb=[0,1,2,3,4,5].filter(s2=>!isBanned(s2)&&G.spots[s2].length);
+        if(!nb.length && ensureBoardHasFish()){            // 場面抓乾 → 先從魚庫補魚
+          nb=[0,1,2,3,4,5].filter(s2=>!isBanned(s2)&&G.spots[s2].length);
+          addLog(`補充堆遞補：深處游來新的魚群。`,"lg-sys");
+        }
         if(nb.length){
           const near=nb.filter(s2=>Math.abs(s2-spot)===1);
           swSrc=near.length?near[rnd(near.length)]:nb[rnd(nb.length)];
-          addLog(`啟動「鄰近遞補」：由鄰近水域補上一條！`,"lg-sys");
+          if(swSrc!==spot) addLog(`啟動「鄰近遞補」：由鄰近水域補上一條！`,"lg-sys");
         }
       }
       if(G.spots[swSrc].length){
@@ -1141,15 +1156,19 @@ async function doFishing(p,spot){
       for(let k=0;k<wantN;k++){
         let src=spot;
         if(!G.spots[src].length){
-          const nb=[0,1,2,3,4,5].filter(s2=>!isBanned(s2)&&G.spots[s2].length);
-          if(!nb.length){
+          let nb=[0,1,2,3,4,5].filter(s2=>!isBanned(s2)&&G.spots[s2].length);
+          if(!nb.length && ensureBoardHasFish()){          // 場面抓乾 → 先從魚庫補魚
+            nb=[0,1,2,3,4,5].filter(s2=>!isBanned(s2)&&G.spots[s2].length);
+            addLog(`補充堆遞補：深處游來新的魚群。`,"lg-sys");
+          }
+          if(!nb.length){                                   // 連魚庫都空了才是真的沒魚
             if(k===0){ await toast("這片水域沒有魚⋯"); addLog(`${p.name} 的水域空空如也。`,"lg-bad"); }
             break;
           }
           // 優先找最近的點位，其次全域隨機
           const near=nb.filter(s2=>Math.abs(s2-spot)===1);
           src=near.length?near[rnd(near.length)]:nb[rnd(nb.length)];
-          addLog(`啟動「鄰近遞補」：由鄰近水域補上一條！`,"lg-sys");
+          if(src!==spot) addLog(`啟動「鄰近遞補」：由鄰近水域補上一條！`,"lg-sys");
         }
         const f=G.spots[src].splice(rnd(G.spots[src].length),1)[0];
         if(fishAuto(f,G.site)){                                     // 難度 1 於 ≥ 場地：自動捕獲
@@ -1842,7 +1861,7 @@ function applyServerConfig(cfg){
   try{
     if(cfg.fish&&cfg.fish.length){
       FISH_SPECIES.length=0;
-      FISH_SPECIES.push(...cfg.fish.map(f=>({name:f.name,count:f.card_count,diff:f.difficulty,category:f.category,colors:["#7fb2c9","#d8e8ef","#4a7f97"]})));
+      FISH_SPECIES.push(...cfg.fish.map(f=>({name:f.name,count:(+f.card_count>0?+f.card_count:1),diff:f.difficulty,category:f.category,colors:["#7fb2c9","#d8e8ef","#4a7f97"]})));
       Object.keys(FISH_ART).forEach(k=>delete FISH_ART[k]);
       cfg.fish.forEach(f=>{ FISH_ART[f.name]=Object.assign({shape:"oval",pat:"plain"},f.art||{}); });
       rebuildSpeciesIndex();
