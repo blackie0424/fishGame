@@ -427,8 +427,20 @@ function shoreScene(canvas,opts={}){
         g.beginPath(); g.moveTo(sh.x-dir*6,sh.y+wig); g.lineTo(sh.x-dir*11,sh.y+wig-3); g.lineTo(sh.x-dir*11,sh.y+wig+3); g.fill();
       }
     }
-    // --- 魚躍出水面（偶發） ---
-    if(!jump && t>nextJump){ jump={t:0,x:W*(.12+Math.random()*.7),y0:horizon+30+Math.random()*(shore-horizon-90)}; if(opts.sound&&SFX.jumpS) SFX.jumpS(); }
+    // --- 魚躍出水面（偶發）：從有魚的點位跳出，讓玩家判斷魚在哪 ---
+    if(!jump && t>nextJump){
+      const fishySpots=opts.interactive&&typeof G!=="undefined"&&G.spots
+        ? [0,1,2,3,4,5].filter(sp=>G.spots[sp]&&G.spots[sp].length>0) : [];
+      if(fishySpots.length){
+        const sp=fishySpots[rnd(fishySpots.length)];
+        const jx=W*SPOT_POS[sp][0]+(Math.random()-.5)*60;
+        const jy=H*SPOT_POS[sp][1]+(Math.random()-.5)*20;
+        jump={t:0, x:jx, y0:Math.max(horizon+20,Math.min(shore-60,jy))};
+      }else{
+        jump={t:0, x:W*(.12+Math.random()*.7), y0:horizon+30+Math.random()*(shore-horizon-90)};
+      }
+      if(opts.sound&&SFX.jumpS) SFX.jumpS();
+    }
     if(jump){
       jump.t++;
       const k=jump.t/46;
