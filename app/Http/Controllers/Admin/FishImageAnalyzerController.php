@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Http\Client\ConnectionException;
 
 class FishImageAnalyzerController extends Controller
 {
@@ -16,21 +17,18 @@ class FishImageAnalyzerController extends Controller
             'description' => 'nullable|string|max:500',
         ]);
 
+        $apiKey = config('services.google_ai.key');
+        if (empty($apiKey)) {
+            return response()->json(['error' => '後台尚未設定 GOOGLE_AI_API_KEY，請聯絡管理員。'], 503);
+        }
+
         $imageData = base64_encode(file_get_contents($request->file('image')->path()));
         $mimeType  = $request->file('image')->getMimeType();
 
-        $apiKey = config('services.google_ai.key');
-        if (! $apiKey) {
-            return response()->json(['error' => '尚未設定 GOOGLE_AI_API_KEY（主機環境變數），請設定後再試。'], 422);
-        }
-        // gemini-1.5-flash 已於 2025 年退役（回 404），改用現行 GA 模型
-        $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={$apiKey}";
-
-        // AI 呼叫可能超過 PHP 預設 30 秒上限，被砍會回 HTML 錯誤頁而非 JSON
-        set_time_limit(90);
+        $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$apiKey}";
 
         try {
-            $response = Http::timeout(60)->post($endpoint, [
+                $response = Http::timeout(30)->post($endpoint, [
                 'contents' => [[
                     'parts' => [
                         [
@@ -45,14 +43,13 @@ class FishImageAnalyzerController extends Controller
                     ],
                 ]],
             ]);
-        } catch (\Illuminate\Http\Client\ConnectionException $e) {
-            return response()->json(['error' => 'AI 服務連線逾時或失敗：'.$e->getMessage()], 504);
+        } catch (ConnectionException $e) {
+            return response()->json(['error' => '無法連線至 AI 服務，請稍後再試。'], 503);
         }
 
         if ($response->failed()) {
-            // 帶出上游錯誤，讓管理者能區分「金鑰無效／模型不存在／額度用盡」
-            $detail = $response->json('error.message') ?? mb_substr((string) $response->body(), 0, 300);
-            return response()->json(['error' => 'AI 服務錯誤（HTTP '.$response->status().'）：'.$detail], 503);
+            $msg = $response->json('error.message') ?? 'AI 服務暫時無法使用，請稍後再試。';
+            return response()->json(['error' => $msg], 503);
         }
 
         $text = $response->json('candidates.0.content.parts.0.text', '');
@@ -68,31 +65,6 @@ class FishImageAnalyzerController extends Controller
         }
 
         return response()->json(['art' => $art]);
-    }
-
-    /** 一鍵驗證「主機 → Gemini」整條鏈路（金鑰／模型／網路），不需上傳圖片 */
-    public function selfTest(): JsonResponse
-    {
-        $apiKey = config('services.google_ai.key');
-        if (! $apiKey) {
-            return response()->json(['error' => '尚未設定 GOOGLE_AI_API_KEY（主機環境變數）。'], 422);
-        }
-        $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={$apiKey}";
-
-        try {
-            $response = Http::timeout(30)->post($endpoint, [
-                'contents' => [['parts' => [['text' => '請只回覆兩個字：OK']]]],
-            ]);
-        } catch (\Illuminate\Http\Client\ConnectionException $e) {
-            return response()->json(['error' => '無法連上 Gemini：'.$e->getMessage()], 504);
-        }
-
-        if ($response->failed()) {
-            $detail = $response->json('error.message') ?? mb_substr((string) $response->body(), 0, 300);
-            return response()->json(['error' => 'Gemini 回應錯誤（HTTP '.$response->status().'）：'.$detail], 503);
-        }
-
-        return response()->json(['ok' => true, 'reply' => trim((string) $response->json('candidates.0.content.parts.0.text', ''))]);
     }
 
     private function buildPrompt(string $description): string
