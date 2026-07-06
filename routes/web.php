@@ -19,6 +19,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::middleware('admin.auth')->group(function () {
         Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
         Route::post('fish/analyze-image', [FishImageAnalyzerController::class, 'analyze'])->name('fish.analyze');
+        Route::post('fish/analyze-selftest', [FishImageAnalyzerController::class, 'selfTest'])->name('fish.selftest');
+        Route::get('ping', fn () => response()->json(['ok' => true]))->name('ping'); // AJAX 前置 session 檢查
         Route::view('simulator', 'admin.simulator')->name('simulator'); // 需在 {entity} 萬用路由之前
         Route::get('{entity}', [AdminController::class, 'index'])->name('index');
         Route::get('{entity}/create', [AdminController::class, 'edit'])->name('create');

@@ -70,6 +70,31 @@ class FishImageAnalyzerController extends Controller
         return response()->json(['art' => $art]);
     }
 
+    /** 一鍵驗證「主機 → Gemini」整條鏈路（金鑰／模型／網路），不需上傳圖片 */
+    public function selfTest(): JsonResponse
+    {
+        $apiKey = config('services.google_ai.key');
+        if (! $apiKey) {
+            return response()->json(['error' => '尚未設定 GOOGLE_AI_API_KEY（主機環境變數）。'], 422);
+        }
+        $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={$apiKey}";
+
+        try {
+            $response = Http::timeout(30)->post($endpoint, [
+                'contents' => [['parts' => [['text' => '請只回覆兩個字：OK']]]],
+            ]);
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            return response()->json(['error' => '無法連上 Gemini：'.$e->getMessage()], 504);
+        }
+
+        if ($response->failed()) {
+            $detail = $response->json('error.message') ?? mb_substr((string) $response->body(), 0, 300);
+            return response()->json(['error' => 'Gemini 回應錯誤（HTTP '.$response->status().'）：'.$detail], 503);
+        }
+
+        return response()->json(['ok' => true, 'reply' => trim((string) $response->json('candidates.0.content.parts.0.text', ''))]);
+    }
+
     private function buildPrompt(string $description): string
     {
         $extra = $description ? "\n使用者補充說明：{$description}" : '';
