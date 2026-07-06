@@ -14,6 +14,7 @@ import { drawFish, drawAvatar, getFishArt, drawPixFisher } from './renderer/spri
 import { drawSeaBands, drawFishShadow, drawRockRight, tickDrops } from './renderer/scene.js';
 import { createGameState, advanceTurn } from './state/GameState.js';
 import { pickBannedSpots as pickBanned, siteCaps as calcSiteCaps, boardHasFish as hasBoardFish, refillBoard } from './utils/board.js';
+import { sharePhase as runSharePhase, checkPersonal as checkPersonalPure } from './utils/share.js';
 import { applyServerConfig as applyCfg } from './config/serverConfig.js';
 import { INTRO_SCENES } from './data/intro.js';
 import { startFight } from './renderer/fight.js';
@@ -1006,8 +1007,13 @@ function aiPickSpot(p){
 /* ---------------- 抽行動卡 → 判定 → 取魚 ---------------- */
 /* 階段一：命運卡。回傳物件 {proceed, flags} — proceed=true 才進入拉竿階段 */
 async function drawDestiny(p){
+  // 風太大＝二段式：擲骰成功代表順利下竿，「再抽一張命運卡」判定下竿後的情況
+  // （不保證中魚；第二張不會再是風太大，抽到即跳過重抽）
+  let windPassed=false;
+  for(;;){
   if(!G.destinyDeck||!G.destinyDeck.length) G.destinyDeck=buildDestinyDeck(G.site);
   const c=G.destinyDeck.pop();
+  if(windPassed && c.kind==="wind") continue;
   addLog(`🔮 ${p.name} 的命運卡：「${c.title}」— ${c.content}`);
   await showCard("destiny",{animType:c.t,emoji:"🔮",title:c.title,desc:c.content,flavor:c.result},p.human);
   const flags={swallow:false,double:false,hooked:false};
@@ -1033,7 +1039,9 @@ async function drawDestiny(p){
     }
     case "wind":{
       const roll=await rollDice(p,"風太大！擲骰 >2 魚餌才能順利入海",r=>r>2);
-      if(roll>2){ flags.hooked=true; addLog(`${p.name} 頂著大風把餌送進海裡（骰 ${roll}），進入拉竿階段！`,"lg-ok"); return {proceed:true,flags}; }
+      if(roll>2){ windPassed=true;
+        addLog(`${p.name} 頂著大風把餌送進海裡（骰 ${roll}），再抽一張命運卡看看海裡的情況⋯`,"lg-ok");
+        await toast("🌬️ 下竿成功！再抽一張命運卡",1600); break; }
       addLog(`${p.name} 的餌被風吹走了（骰 ${roll}），沒有漁獲。`,"lg-bad");
       await toast("🌬️ 餌被風吹走了⋯"); return {proceed:false,flags};
     }
@@ -1056,6 +1064,7 @@ async function drawDestiny(p){
     case "go_swallow": flags.swallow=true; flags.hooked=true; return {proceed:true,flags};
     case "go_double":  flags.double=true;  flags.hooked=true; return {proceed:true,flags};
     default: flags.hooked=true; return {proceed:true,flags};   // go（魚已上鉤語境）
+  }
   }
 }
 
@@ -1667,44 +1676,14 @@ async function roundEnd(){
 /* =====================================================================
    結算：分享階段 + 勝負
 ===================================================================== */
-function checkPersonal(p){
-  const okCnt=p.catch.length>=p.role.need;
-  const okTgt=!p.role.target || p.catch.some(f=>p.role.target.includes(f.name));
-  return okCnt&&okTgt;
-}
-/* 達悟分享精神：有餘者分魚給缺者（先補目標魚，再補數量） */
+function checkPersonal(p){ return checkPersonalPure(p); }
+/* 達悟分享精神 v2：漁獲視為整體——目標魚全域配對，數量重分配「釣最多的先拿」。
+   純邏輯在 utils/share.js（與 simCore 共用），這裡只做耆老敘事。 */
 function sharePhase(){
-  const notes=[]; const transfers=[];
-  // 1. 目標魚轉讓：持有者已達成自身條件且該魚非自己必需
-  for(const p of G.players){
-    if(checkPersonal(p)||!p.role.target) continue;
-    if(p.catch.some(f=>p.role.target.includes(f.name))) continue;
-    for(const q of G.players){
-      if(q===p) continue;
-      const idx=q.catch.findIndex(f=>p.role.target.includes(f.name) && !(q.role.target&&q.role.target.includes(f.name)&&q.catch.filter(x=>q.role.target.includes(x.name)).length<=1));
-      if(idx>=0 && q.catch.length-1>= (checkPersonal(q)?q.role.need:0)){
-        const f=q.catch.splice(idx,1)[0]; p.catch.push(f);
-        notes.push(`🤝 ${q.name} 把 <b>${f.name}</b> 分享給 ${p.name}（成全他的家庭任務）`);
-        transfers.push({from:q,to:p,fish:f,why:"target"});
-        break;
-      }
-    }
-  }
-  // 2. 數量補齊：多的分給少的
-  let moved=true;
-  while(moved){
-    moved=false;
-    const lack=G.players.find(p=>p.catch.length<p.role.need);
-    const rich=G.players.filter(q=>q.catch.length>q.role.need)
-      .sort((a,b)=>b.catch.length-b.role.need-(a.catch.length-a.role.need));
-    if(lack&&rich.length){
-      const q=rich[0];
-      const idx=q.catch.findIndex(f=>!(q.role.target&&q.role.target.includes(f.name)&&q.catch.filter(x=>q.role.target.includes(x.name)).length<=1));
-      if(idx>=0){ const f=q.catch.splice(idx,1)[0]; lack.catch.push(f);
-        notes.push(`🤝 ${q.name} 分了一條 <b>${f.name}</b> 給 ${lack.name}`);
-        transfers.push({from:q,to:lack,fish:f,why:"count"}); moved=true; }
-    }
-  }
+  const {transfers}=runSharePhase(G.players);
+  const notes=transfers.map(t=> t.why==="target"
+    ? `🤝 ${t.from.name} 釣到的 <b>${t.fish.name}</b>，剛好是 ${t.to.name}（${t.to.role.name}）家裡需要的——分給他`
+    : `🤝 ${t.from.name} 分了一條 <b>${t.fish.name}</b> 給 ${t.to.name}`);
   return {notes,transfers};
 }
 

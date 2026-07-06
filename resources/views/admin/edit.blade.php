@@ -63,18 +63,41 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
-    const formData = new FormData();
-    formData.append('image', fileInput.files[0]);
-    formData.append('description', descInput.value);
-    formData.append('_token', '{{ csrf_token() }}');
+    // 瀏覽器端先縮圖（手機照片動輒 3-8MB，會超過 PHP 上傳限制導致「無法上傳」）
+    function compressImage(file) {
+      return new Promise(function (resolve) {
+        if (file.size < 300 * 1024) return resolve(file);
+        const img = new Image();
+        img.onload = function () {
+          const MAX = 1024;
+          const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+          const cv = document.createElement('canvas');
+          cv.width = Math.round(img.width * scale);
+          cv.height = Math.round(img.height * scale);
+          cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+          cv.toBlob(function (b) { resolve(b || file); }, 'image/jpeg', 0.85);
+          URL.revokeObjectURL(img.src);
+        };
+        img.onerror = function () { resolve(file); };
+        img.src = URL.createObjectURL(file);
+      });
+    }
 
     btn.disabled = true;
-    status.textContent = '分析中…';
+    status.textContent = '壓縮圖片中…';
     status.style.color = '#666';
 
-    fetch('{{ route('admin.fish.analyze') }}', {
-      method: 'POST',
-      body: formData,
+    compressImage(fileInput.files[0]).then(function (blob) {
+      const formData = new FormData();
+      formData.append('image', blob, 'fish.jpg');
+      formData.append('description', descInput.value);
+      formData.append('_token', '{{ csrf_token() }}');
+      status.textContent = '分析中…';
+      return fetch('{{ route('admin.fish.analyze') }}', {
+        method: 'POST',
+        headers: { Accept: 'application/json' },
+        body: formData,
+      });
     })
       .then(function (res) { return res.json(); })
       .then(function (data) {
@@ -83,7 +106,7 @@ document.addEventListener('DOMContentLoaded', function () {
           status.textContent = '分析完成，請確認並調整後儲存。';
           status.style.color = '#060';
         } else {
-          status.textContent = data.error || '分析失敗，請重試。';
+          status.textContent = data.error || data.message || '分析失敗，請重試。';
           status.style.color = '#c00';
         }
       })

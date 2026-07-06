@@ -35,3 +35,37 @@ describe('simCore 參數化', () => {
     expect(avg(6)).toBeLessThan(avg(15));
   });
 });
+
+/* 風太大二段式（2026-07-06）：擲骰成功後再抽一張命運卡，第二張不會是風太大 */
+describe('drawDestiny 風太大二段式', () => {
+  it('風太大成功 → 由第二張命運卡決定結果；全 go 牌堆下通過率 ≈ 2/3', async () => {
+    const { drawDestiny } = await import('../../../resources/game/sim/simCore.js');
+    let proceed = 0, hooked = 0;
+    const N = 600;
+    for (let i = 0; i < N; i++) {
+      const G = { site: { rule: 'gte', total: 10 }, players: [], destinyDeck: [
+        { kind: 'go' }, { kind: 'wind' },          // pop 先抽到 wind，成功後抽到 go
+      ] };
+      const p = { idx: 0, rest: 0, catch: [] };
+      G.players = [p, { idx: 1, rest: 0, catch: [] }];
+      const r = drawDestiny(G, p);
+      if (r.proceed) { proceed++; if (r.flags.hooked) hooked++; }
+    }
+    expect(proceed / N).toBeGreaterThan(0.55);   // 理論 2/3，統計容差
+    expect(proceed / N).toBeLessThan(0.78);
+    expect(hooked).toBe(proceed);                // 通過必為第二張 go 給的 hooked
+  });
+
+  it('第二張抽到風太大會跳過重抽', async () => {
+    const { drawDestiny } = await import('../../../resources/game/sim/simCore.js');
+    for (let i = 0; i < 200; i++) {
+      const G = { site: { rule: 'gte', total: 10 }, players: [], destinyDeck: [
+        { kind: 'fail' }, { kind: 'wind' }, { kind: 'wind' },   // wind→(成功)→skip wind→fail
+      ] };
+      const p = { idx: 0, rest: 0, catch: [] };
+      G.players = [p, { idx: 1, rest: 0, catch: [] }];
+      const r = drawDestiny(G, p);
+      expect(r.proceed).toBe(false);   // 無論風太大成敗，結局都是 fail 或風吹走
+    }
+  });
+});

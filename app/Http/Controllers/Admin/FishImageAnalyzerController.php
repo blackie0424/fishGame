@@ -19,8 +19,12 @@ class FishImageAnalyzerController extends Controller
         $imageData = base64_encode(file_get_contents($request->file('image')->path()));
         $mimeType  = $request->file('image')->getMimeType();
 
-        $apiKey   = config('services.google_ai.key');
-        $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$apiKey}";
+        $apiKey = config('services.google_ai.key');
+        if (! $apiKey) {
+            return response()->json(['error' => '尚未設定 GOOGLE_AI_API_KEY（主機環境變數），請設定後再試。'], 422);
+        }
+        // gemini-1.5-flash 已於 2025 年退役（回 404），改用現行 GA 模型
+        $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={$apiKey}";
 
         $response = Http::timeout(30)->post($endpoint, [
             'contents' => [[
@@ -39,7 +43,9 @@ class FishImageAnalyzerController extends Controller
         ]);
 
         if ($response->failed()) {
-            return response()->json(['error' => 'AI 服務暫時無法使用，請稍後再試。'], 503);
+            // 帶出上游錯誤，讓管理者能區分「金鑰無效／模型不存在／額度用盡」
+            $detail = $response->json('error.message') ?? mb_substr((string) $response->body(), 0, 300);
+            return response()->json(['error' => 'AI 服務錯誤（HTTP '.$response->status().'）：'.$detail], 503);
         }
 
         $text = $response->json('candidates.0.content.parts.0.text', '');

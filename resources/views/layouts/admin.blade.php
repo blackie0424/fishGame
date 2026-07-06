@@ -38,9 +38,12 @@ code{color:#8fd3e8;word-break:break-all;}
   <h1>🌊 蘭嶼釣魚趣 · 後台管理</h1>
   <div style="margin-left:auto;display:flex;gap:12px;align-items:center;">
     <a href="{{ route('game') }}" target="_blank">▶ 開啟遊戲</a>
+    @if(session('is_admin'))
     <form method="post" action="{{ route('admin.logout') }}">@csrf<button class="btn sm red">登出</button></form>
+    @endif
   </div>
 </header>
+@if(session('is_admin'))
 <nav>
   <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard')?'on':'' }}">總覽</a>
   @foreach(\App\Admin\EntityRegistry::all() as $key => $cfg)
@@ -48,6 +51,7 @@ code{color:#8fd3e8;word-break:break-all;}
   @endforeach
   <a href="{{ route('admin.simulator') }}" class="{{ request()->routeIs('admin.simulator')?'on':'' }}">📊 勝率試算</a>
 </nav>
+@endif
 <main>
   @if(session('ok'))<div class="ok">{{ session('ok') }}</div>@endif
   @if($errors->any())<div class="err">{{ implode('、',$errors->all()) }}</div>@endif

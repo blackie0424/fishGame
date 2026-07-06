@@ -8,6 +8,7 @@ import { ROLES } from '../data/roles.js';
 import { shuffle, rnd, buildFishSupply, buildActionDeck, buildDestinyDeck, buildEnvDeck } from '../utils/deck.js';
 import { siteTier, fishPass, fishAuto } from '../utils/rules.js';
 import { pickBannedSpots, siteCaps, boardHasFish, refillBoard } from '../utils/board.js';
+import { sharePhase, checkPersonal } from '../utils/share.js';
 
 const roll = () => 1 + rnd(6);
 const DEFAULT_WEIGHTS = { randomFishRatio: 0.35, lowFishBias: 1.7, targetFishWeight: 0.35 };
@@ -64,10 +65,15 @@ function aiPickSpot(G, p) {
   return best;
 }
 
-/* === drawDestiny 移植（無 UI） === */
-function drawDestiny(G, p) {
+/* === drawDestiny 移植（無 UI）。
+   風太大＝二段式：擲骰成功後「再抽一張命運卡」判定下竿後的情況
+   （第二張不會再是風太大，抽到即跳過重抽）。 === */
+export function drawDestiny(G, p) {
+  let windPassed = false;
+  for (;;) {
   if (!G.destinyDeck.length) G.destinyDeck = buildDestinyDeck(G.site);
   const c = G.destinyDeck.pop();
+  if (windPassed && c.kind === 'wind') continue;
   const flags = { swallow: false, double: false, hooked: false };
   switch (c.kind) {
     case 'fail': return { proceed: false, flags };
@@ -77,7 +83,7 @@ function drawDestiny(G, p) {
       return { proceed: false, flags };
     }
     case 'wind': {
-      if (roll() > 2) { flags.hooked = true; return { proceed: true, flags }; }
+      if (roll() > 2) { windPassed = true; continue; }
       return { proceed: false, flags };
     }
     case 'eel': {
@@ -91,6 +97,7 @@ function drawDestiny(G, p) {
     case 'go_swallow': flags.swallow = true; flags.hooked = true; return { proceed: true, flags };
     case 'go_double': flags.double = true; flags.hooked = true; return { proceed: true, flags };
     default: flags.hooked = true; return { proceed: true, flags };
+  }
   }
 }
 
@@ -197,38 +204,6 @@ function roundEnd(G, rounds, W) {
   G.round++;
 }
 
-/* === sharePhase 移植 === */
-function sharePhase(G) {
-  const checkPersonal = p => p.catch.length >= p.role.need &&
-    (!p.role.target || p.catch.some(f => p.role.target.includes(f.name)));
-  for (const p of G.players) {
-    if (checkPersonal(p) || !p.role.target) continue;
-    if (p.catch.some(f => p.role.target.includes(f.name))) continue;
-    for (const q of G.players) {
-      if (q === p) continue;
-      const idx = q.catch.findIndex(f => p.role.target.includes(f.name) &&
-        !(q.role.target && q.role.target.includes(f.name) && q.catch.filter(x => q.role.target.includes(x.name)).length <= 1));
-      if (idx >= 0 && q.catch.length - 1 >= (checkPersonal(q) ? q.role.need : 0)) {
-        p.catch.push(q.catch.splice(idx, 1)[0]);
-        break;
-      }
-    }
-  }
-  let moved = true;
-  while (moved) {
-    moved = false;
-    const lack = G.players.find(p => p.catch.length < p.role.need);
-    const rich = G.players.filter(q => q.catch.length > q.role.need)
-      .sort((a, b) => b.catch.length - b.role.need - (a.catch.length - a.role.need));
-    if (lack && rich.length) {
-      const q = rich[0];
-      const idx = q.catch.findIndex(f => !(q.role.target && q.role.target.includes(f.name) && q.catch.filter(x => q.role.target.includes(x.name)).length <= 1));
-      if (idx >= 0) { lack.catch.push(q.catch.splice(idx, 1)[0]); moved = true; }
-    }
-  }
-  return checkPersonal;
-}
-
 /** 單場模擬。weights = {randomFishRatio, lowFishBias, targetFishWeight} */
 export function playOne(site, nPlayers, rounds, weights = DEFAULT_WEIGHTS, goalOverride = null) {
   const W = { ...DEFAULT_WEIGHTS, ...weights };
@@ -242,7 +217,7 @@ export function playOne(site, nPlayers, rounds, weights = DEFAULT_WEIGHTS, goalO
     }
     roundEnd(G, rounds, W);
   }
-  const checkPersonal = sharePhase(G);
+  sharePhase(G.players);   // 耆老分魚 v2（utils/share.js，與 game.js 共用）
   const total = G.players.reduce((a, p) => a + p.catch.length, 0);
   return {
     collectiveWin: total >= G.goal,
