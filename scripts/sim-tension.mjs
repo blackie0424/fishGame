@@ -9,7 +9,7 @@ import { runBotFight } from '../resources/game/minigame/tension.js';
 const N = +(process.argv[2] || 1500);
 const oldOdds = (d, rule) => rule === 'gt' ? (6 - d) / 6 : (7 - d) / 6;
 
-console.log(`每格 ${N} 場（一般玩家機器人：反應 300ms、13% 手滑、75% 跟上站位）\n`);
+console.log(`每格 ${N} 場（一般玩家機器人：反應 300ms、13% 手滑）\n`);
 for (const rule of ['gte', 'gt']) {
   console.log(`── ${rule === 'gt' ? 'gt 場地（黑水溝級，判定 >）' : '一般場地（判定 ≥）'} ──`);
   for (let d = 1; d <= 5; d++) {

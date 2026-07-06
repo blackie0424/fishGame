@@ -56,20 +56,26 @@ describe('createTensionFight — 核心收放規則', () => {
   it('完美節奏（掙扎/前兆放線、平靜收線）→ 一定起魚（landed）', () => {
     for (let d = 1; d <= 5; d++) for (const site of [GTE, GT]) {
       const f = createTensionFight(fish(d), site, lcg(d * 7 + (site.rule === 'gt' ? 3 : 0)));
-      while (!f.st.done) f.tick(25, { pull: f.st.mode === 'calm' && f.st.tension < 88, stance: f.st.runDir });
+      while (!f.st.done) f.tick(25, { pull: f.st.mode === 'calm' && f.st.tension < 88 });
       expect(f.st.done).toBe('landed');
     }
   });
-  it('站位跟上暴衝 → 掙扎中緊繃度上升較慢（移動站位有實質效益）', () => {
-    const mk = stance => {
-      const f = createTensionFight(fish(5), GTE, seqRng([.5, .1, .3])); // 強制觸發暴衝（runProb .85）
-      while (f.st.mode !== 'struggle' && !f.st.done) f.tick(25, { pull: false, stance: 0 });
-      expect(f.st.runDir).not.toBe(0);
-      const t0 = f.st.tension, dir = f.st.runDir;
-      f.tick(300, { pull: true, stance: stance === 'follow' ? dir : -dir });
-      return f.st.tension - t0;
+  it('移動機制已取消（2026-07-06）：不再產生暴衝方向，站位輸入不影響結果', () => {
+    const f = createTensionFight(fish(5), GTE, lcg(99));
+    let struggles = 0;
+    while (!f.st.done && struggles < 4) {
+      const was = f.st.mode;
+      f.tick(25, { pull: f.st.mode === 'calm' && f.st.tension < 80 });
+      if (was !== 'struggle' && f.st.mode === 'struggle') struggles++;
+      expect(f.st.runDir).toBe(0);
+    }
+    const run = stance => {
+      const g = createTensionFight(fish(4), GT, lcg(777));
+      while (!g.st.done) g.tick(50, { pull: g.st.mode === 'calm' && g.st.tension < 70, stance });
+      return `${g.st.done}@${g.st.t}`;
     };
-    expect(mk('follow')).toBeLessThan(mk('oppose') * 0.5);
+    expect(run(1)).toBe(run(0));
+    expect(run(-1)).toBe(run(0));
   });
   it('rng 注入後結果可重現（決定性）', () => {
     const run = () => { const f = createTensionFight(fish(3), GT, lcg(123));
