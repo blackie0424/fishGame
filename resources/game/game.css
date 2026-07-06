@@ -32,6 +32,8 @@ button{font-family:inherit; cursor:pointer;}
   box-shadow:0 4px 0 #a97d10, 0 6px 0 rgba(0,0,0,.5);
   transition:transform .05s;
   letter-spacing:1px;
+  user-select:none; -webkit-user-select:none;
+  touch-action:none; -webkit-tap-highlight-color:transparent;
 }
 .pixel-btn:active{transform:translateY(4px); box-shadow:0 0 0 #a97d10;}
 .pixel-btn.red{background:var(--tao-red); color:#fff; box-shadow:0 4px 0 #7a1519,0 6px 0 rgba(0,0,0,.5);}
@@ -217,7 +219,8 @@ button{font-family:inherit; cursor:pointer;}
 }
 /* 搏鬥畫布（骰子上方） */
 #fight-canvas{width:min(400px,90vw); height:auto; border:var(--px) solid var(--tao-black);
-  box-shadow:0 6px 0 rgba(0,0,0,.5); image-rendering:pixelated; display:none;}
+  box-shadow:0 6px 0 rgba(0,0,0,.5); image-rendering:pixelated; display:none;
+  user-select:none; -webkit-user-select:none; touch-action:none;}
 
 /* 收放拉鋸：手機長按不得觸發文字選取/放大鏡/長按選單（會劫持觸控 → pointercancel → 卡死） */
 #ov-dice, #ov-dice *{
