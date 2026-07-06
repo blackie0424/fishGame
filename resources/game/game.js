@@ -1611,7 +1611,9 @@ function tensionFight(p,f){
       cvs.onpointerdown=cvs.onpointerup=cvs.onpointerleave=cvs.onpointercancel=null;
       window.removeEventListener("keydown",onKey); window.removeEventListener("keyup",onKey);
       window.removeEventListener("contextmenu",onCtx);
-      // 結束演出期間按鈕已無作用 → 直接隱藏（rollDice 下次使用時會自行重設文字與可見性）
+      // 結束演出期間：按鈕留在原位但變暗停用（手指可能還按著——突然消失會造成「還能不能按」的困惑）
+      if(p.human){ btn.textContent="🐟 收竿中⋯"; btn.disabled=true; btn.style.opacity=".45"; btn.style.pointerEvents="none"; } };
+    const restoreBtn=()=>{ btn.disabled=false; btn.style.opacity=""; btn.style.pointerEvents="";
       btn.style.visibility="hidden"; btn.textContent="🎲 擲骰子"; };
 
     // ---- 戰鬥邏輯：人類 = 真實拉鋸；AI = 腳本演出 + 原骰子機率 ----
@@ -1642,6 +1644,7 @@ function tensionFight(p,f){
       else if(kind==="snap"){ SFX.bad(); SFX.knock(); r.textContent=`💥 啪！線斷了，${f.name} 掙脫游走⋯`; r.className="bad"; }
       else { SFX.bad(); r.textContent=`💨 線太鬆，${f.name} 吐鉤游走了⋯`; r.className="bad"; }
       setTimeout(()=>{ cancelAnimationFrame(raf); g.clearRect(0,0,W,H); cvs.style.display="none";
+        restoreBtn();                                  // 關閉前恢復按鈕預設（下一場拉鋸/擲骰會自行重設）
         ov.classList.remove("show"); die.style.display=""; res(ok); },1600);
     };
 
