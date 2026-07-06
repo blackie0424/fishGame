@@ -1604,11 +1604,13 @@ function tensionFight(p,f){
     const setPull=v=>{ pull=v; };
     const onDown=e=>{ e.preventDefault(); setPull(true); };
     const onUp=()=>setPull(false);
+    const onCtx=e=>e.preventDefault();               // 長按選單（Android）會奪走觸控
     const onKey=e=>{ if(e.repeat) return;
       if(e.code==="Space"||e.code==="Enter"){ e.preventDefault(); setPull(e.type==="keydown"); } };
-    const cleanup=()=>{ btn.onpointerdown=btn.onpointerup=btn.onpointerleave=null;
-      cvs.onpointerdown=cvs.onpointerup=cvs.onpointerleave=null;
+    const cleanup=()=>{ btn.onpointerdown=btn.onpointerup=btn.onpointerleave=btn.onpointercancel=null;
+      cvs.onpointerdown=cvs.onpointerup=cvs.onpointerleave=cvs.onpointercancel=null;
       window.removeEventListener("keydown",onKey); window.removeEventListener("keyup",onKey);
+      window.removeEventListener("contextmenu",onCtx);
       // 結束演出期間按鈕已無作用 → 直接隱藏（rollDice 下次使用時會自行重設文字與可見性）
       btn.style.visibility="hidden"; btn.textContent="🎲 擲骰子"; };
 
@@ -1647,7 +1649,10 @@ function tensionFight(p,f){
       btn.style.visibility="visible";
       btn.onpointerdown=onDown; btn.onpointerup=onUp; btn.onpointerleave=onUp;
       cvs.onpointerdown=onDown; cvs.onpointerup=onUp; cvs.onpointerleave=onUp;
+      // 系統手勢（文字選取/滾動/通知列）搶走觸控時瀏覽器發 pointercancel——視同放線，避免輸入卡死
+      btn.onpointercancel=onUp; cvs.onpointercancel=onUp;
       window.addEventListener("keydown",onKey); window.addEventListener("keyup",onKey);
+      window.addEventListener("contextmenu",onCtx);
     } else btn.style.visibility="hidden";
 
     let t0=performance.now(), tPrev=t0;
