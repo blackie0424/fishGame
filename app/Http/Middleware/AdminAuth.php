@@ -15,6 +15,11 @@ class AdminAuth
     public function handle(Request $request, Closure $next): Response
     {
         if (! $request->session()->get('is_admin')) {
+            // AJAX（如 AI 分析）不可回 302：跟隨轉址會拿到登入頁 HTML，前端只會看到「網路錯誤」
+            if ($request->expectsJson()) {
+                return response()->json(['error' => '後台登入已逾時，請重新整理頁面並登入後再試。'], 401);
+            }
+
             return redirect()->route('admin.login');
         }
 

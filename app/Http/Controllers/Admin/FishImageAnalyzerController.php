@@ -26,21 +26,28 @@ class FishImageAnalyzerController extends Controller
         // gemini-1.5-flash 已於 2025 年退役（回 404），改用現行 GA 模型
         $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={$apiKey}";
 
-        $response = Http::timeout(30)->post($endpoint, [
-            'contents' => [[
-                'parts' => [
-                    [
-                        'inlineData' => [
-                            'mimeType' => $mimeType,
-                            'data'     => $imageData,
+        // AI 呼叫可能超過 PHP 預設 30 秒上限，被砍會回 HTML 錯誤頁而非 JSON
+        set_time_limit(90);
+
+        try {
+            $response = Http::timeout(60)->post($endpoint, [
+                'contents' => [[
+                    'parts' => [
+                        [
+                            'inlineData' => [
+                                'mimeType' => $mimeType,
+                                'data'     => $imageData,
+                            ],
+                        ],
+                        [
+                            'text' => $this->buildPrompt($request->input('description', '')),
                         ],
                     ],
-                    [
-                        'text' => $this->buildPrompt($request->input('description', '')),
-                    ],
-                ],
-            ]],
-        ]);
+                ]],
+            ]);
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            return response()->json(['error' => 'AI 服務連線逾時或失敗：'.$e->getMessage()], 504);
+        }
 
         if ($response->failed()) {
             // 帶出上游錯誤，讓管理者能區分「金鑰無效／模型不存在／額度用盡」

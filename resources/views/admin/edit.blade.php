@@ -99,7 +99,17 @@ document.addEventListener('DOMContentLoaded', function () {
         body: formData,
       });
     })
-      .then(function (res) { return res.json(); })
+      .then(function (res) {
+        return res.text().then(function (t) {
+          try { return JSON.parse(t); }
+          catch (e) {
+            // 非 JSON（登入逾時被轉址、代理錯誤頁、防火牆頁…）→ 顯示真實狀態
+            throw new Error('HTTP ' + res.status +
+              (res.redirected ? '，被轉址到 ' + res.url : '') +
+              '：' + t.replace(/<[^>]*>/g, ' ').trim().slice(0, 120));
+          }
+        });
+      })
       .then(function (data) {
         if (data.art) {
           textarea.value = JSON.stringify(data.art, null, 2);
@@ -110,8 +120,8 @@ document.addEventListener('DOMContentLoaded', function () {
           status.style.color = '#c00';
         }
       })
-      .catch(function () {
-        status.textContent = '網路錯誤，請重試。';
+      .catch(function (err) {
+        status.textContent = '請求失敗：' + (err && err.message ? err.message : '連線中斷，請重試。');
         status.style.color = '#c00';
       })
       .finally(function () {
