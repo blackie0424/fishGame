@@ -69,3 +69,52 @@ describe('drawDestiny 風太大二段式', () => {
     }
   });
 });
+
+/* AI 選點分佈（2026-07-06 修正）：舊版 argmax+微噪音使深水區永遠不會被選，
+   電腦玩家全擠在淺水。新版改加權隨機，拋竿位置須有合理分佈。 */
+describe('aiPickSpot 深淺分佈', () => {
+  async function pickMany(times, patch = {}) {
+    const { aiPickSpot } = await import('../../../resources/game/sim/simCore.js');
+    const counts = [0, 0, 0, 0, 0, 0];
+    for (let i = 0; i < times; i++) {
+      const G = {
+        round: 3,
+        site: { rule: 'gte', total: 12 },
+        activeBanned: new Set(),
+        spots: [[{}, {}], [{}, {}], [{}, {}], [{}, {}], [{}, {}], [{}, {}]],
+        players: [
+          { idx: 0, catch: [], role: { need: 6, target: null } },
+          { idx: 1, catch: [{}, {}, {}, {}], role: { need: 3, target: null } },
+        ],
+        ...patch.G,
+      };
+      const p = patch.p ?? G.players[0];
+      counts[aiPickSpot(G, p)]++;
+    }
+    return counts;
+  }
+
+  it('低於個人需求時（常態）深水區 3-5 也要有合理出現率（≥20%）', async () => {
+    const c = await pickMany(1500);
+    const deep = c[3] + c[4] + c[5];
+    expect(deep / 1500).toBeGreaterThan(0.20);
+    expect(deep / 1500).toBeLessThan(0.75);      // 也不能反過來全衝深水
+  });
+
+  it('缺目標魚時深水區占比明顯提高（>40%）', async () => {
+    const c = await pickMany(1500, {
+      p: { idx: 0, catch: [], role: { need: 5, target: ['Ilek'] } },
+    });
+    const deep = c[3] + c[4] + c[5];
+    expect(deep / 1500).toBeGreaterThan(0.40);
+  });
+
+  it('禁放與空點位永遠不會被選', async () => {
+    const c = await pickMany(300, {
+      G: { activeBanned: new Set([0, 3]), spots: [[{}], [], [{}], [{}], [{}], [{}]] },
+    });
+    expect(c[0]).toBe(0);   // 禁放
+    expect(c[1]).toBe(0);   // 空點位
+    expect(c[3]).toBe(0);   // 禁放
+  });
+});

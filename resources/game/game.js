@@ -983,25 +983,29 @@ function nearestPlayer(p){
   return best||G.players[(G.turnIdx+1)%G.players.length];
 }
 
-/* AI 選點：魚牌面朝下，AI 跟玩家一樣只能靠「深度」推測 —
-   越深的點位越可能藏珍稀魚（成功率也越低）。缺目標魚時偏好冒險。 */
+/* AI 選點：魚牌面朝下，AI 跟玩家一樣只能靠「深度」推測。
+   2026-07-06 改為加權隨機（與 sim/simCore.js 同步雙寫！）：
+   舊版 argmax+微噪音使深水永遠不會被選，電腦玩家全擠淺水區。 */
 function aiPickSpot(p){
-  let best=0,bestScore=-1;
   const needTarget=p.role.target&&!p.catch.some(c=>p.role.target.includes(c.name));
   const total=G.players.reduce((a,q)=>a+q.catch.length,0);
   const behind=total < (G.round-1)*1.5;           // 集體進度落後 → 全隊優先衝數量
+  const weights=[0,0,0,0,0,0];
   for(let s=0;s<6;s++){
     if(isBanned(s)||!G.spots[s].length) continue; // 只能看見牌數，看不見內容
     const d=Math.min(s+1,5);
-    const pOk=G.site.rule==="gt" ? (6-d)/6 : (7-d)/6;   // 骰 vs 魚難度（依場地判定邏輯）
-    let val=1+s*.25 + Math.min(1,G.spots[s].length*.2);   // 深度期望 + 魚多較不易撲空
-    if(needTarget && !behind && G.round<=11) val+= s>=3 ? 1.5 : 0; // 前中期才去深水區賭目標魚
-    if(behind || p.catch.length<p.role.need) val+= s<=2 ? 1.3 : 0; // 落後或缺數量 → 求穩
+    const pOk=G.site.rule==="gt" ? (6-d)/6 : (7-d)/6;    // 骰 vs 魚難度（依場地判定邏輯）
+    let val=1+s*.35 + Math.min(1,G.spots[s].length*.2);  // 深處珍稀魚報酬較高 + 魚多較不易撲空
+    if(needTarget) val+= s>=3 ? 1.2 : 0;                 // 缺目標魚 → 深水加成
+    if(behind) val+= s<=2 ? 1.0 : 0;                     // 全隊落後才求穩搶淺水
     if(p.catch.length>=p.role.need&&!needTarget) val*=.85;
-    const score=pOk*val + Math.random()*.3;
-    if(score>bestScore){bestScore=score; best=s;}
+    weights[s]=pOk*val;
   }
-  return best;
+  let sum=0; for(const w of weights) sum+=w;
+  if(!(sum>0)) return 0;
+  let r=Math.random()*sum;
+  for(let s=0;s<6;s++){ r-=weights[s]; if(r<0) return s; }
+  return 5;
 }
 
 /* ---------------- 抽行動卡 → 判定 → 取魚 ---------------- */

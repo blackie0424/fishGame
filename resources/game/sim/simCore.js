@@ -45,24 +45,30 @@ const isBanned = (G, s) => G.activeBanned.has(s);
 const nearestPlayer = (G, p) =>
   G.players.filter(q => q !== p).sort((a, b) => Math.abs(a.idx - p.idx) - Math.abs(b.idx - p.idx))[0];
 
-/* === game.js aiPickSpot 忠實移植 === */
-function aiPickSpot(G, p) {
-  let best = 0, bestScore = -1;
+/* === game.js aiPickSpot 忠實移植（與 game.js 同步雙寫！） ===
+   2026-07-06 改為加權隨機：舊版 argmax+微噪音使深水永遠不會被選
+   （淺水成功率 1.0 vs 深水 0.33 + 「低於需求」加成幾乎整場成立），
+   電腦玩家全擠淺水區。新版依「成功率×價值」權重抽選，拋竿呈機率分佈。 */
+export function aiPickSpot(G, p) {
   const needTarget = p.role.target && !p.catch.some(c => p.role.target.includes(c.name));
   const total = G.players.reduce((a, q) => a + q.catch.length, 0);
   const behind = total < (G.round - 1) * 1.5;
+  const weights = [0, 0, 0, 0, 0, 0];
   for (let s = 0; s < 6; s++) {
     if (isBanned(G, s) || !G.spots[s].length) continue;
     const d = Math.min(s + 1, 5);
     const pOk = G.site.rule === 'gt' ? (6 - d) / 6 : (7 - d) / 6;
-    let val = 1 + s * .25 + Math.min(1, G.spots[s].length * .2);
-    if (needTarget && !behind && G.round <= 11) val += s >= 3 ? 1.5 : 0;
-    if (behind || p.catch.length < p.role.need) val += s <= 2 ? 1.3 : 0;
+    let val = 1 + s * .35 + Math.min(1, G.spots[s].length * .2);   // 深處珍稀魚報酬較高
+    if (needTarget) val += s >= 3 ? 1.2 : 0;   // 缺目標魚 → 深水加成
+    if (behind) val += s <= 2 ? 1.0 : 0;       // 全隊進度落後才求穩搶淺水
     if (p.catch.length >= p.role.need && !needTarget) val *= .85;
-    const score = pOk * val + Math.random() * .3;
-    if (score > bestScore) { bestScore = score; best = s; }
+    weights[s] = pOk * val;
   }
-  return best;
+  let sum = 0; for (const w of weights) sum += w;
+  if (!(sum > 0)) return 0;
+  let r = Math.random() * sum;
+  for (let s = 0; s < 6; s++) { r -= weights[s]; if (r < 0) return s; }
+  return 5;
 }
 
 /* === drawDestiny 移植（無 UI）。
