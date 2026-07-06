@@ -10,6 +10,7 @@ export default defineConfig({
                 'resources/js/app.js',
                 'resources/game/game.css',
                 'resources/game/game.js',
+                'resources/game/simUI.js',
             ],
             refresh: true,
         }),

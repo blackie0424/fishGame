@@ -19,6 +19,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::middleware('admin.auth')->group(function () {
         Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
         Route::post('fish/analyze-image', [FishImageAnalyzerController::class, 'analyze'])->name('fish.analyze');
+        Route::view('simulator', 'admin.simulator')->name('simulator'); // 需在 {entity} 萬用路由之前
         Route::get('{entity}', [AdminController::class, 'index'])->name('index');
         Route::get('{entity}/create', [AdminController::class, 'edit'])->name('create');
         Route::get('{entity}/{id}/edit', [AdminController::class, 'edit'])->name('edit');

@@ -46,6 +46,7 @@ code{color:#8fd3e8;word-break:break-all;}
   @foreach(\App\Admin\EntityRegistry::all() as $key => $cfg)
     <a href="{{ route('admin.index',$key) }}" class="{{ request()->route('entity')===$key?'on':'' }}">{{ $cfg['label'] }}</a>
   @endforeach
+  <a href="{{ route('admin.simulator') }}" class="{{ request()->routeIs('admin.simulator')?'on':'' }}">📊 勝率試算</a>
 </nav>
 <main>
   @if(session('ok'))<div class="ok">{{ session('ok') }}</div>@endif
