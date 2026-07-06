@@ -14,12 +14,14 @@ import { drawFish, drawAvatar, getFishArt, drawPixFisher } from './renderer/spri
 import { drawSeaBands, drawFishShadow, drawRockRight, tickDrops } from './renderer/scene.js';
 import { createGameState, advanceTurn } from './state/GameState.js';
 import { pickBannedSpots as pickBanned, siteCaps as calcSiteCaps, boardHasFish as hasBoardFish, refillBoard } from './utils/board.js';
+import { sharePhase as runSharePhase, checkPersonal as checkPersonalPure } from './utils/share.js';
 import { applyServerConfig as applyCfg } from './config/serverConfig.js';
 import { INTRO_SCENES } from './data/intro.js';
 import { startFight } from './renderer/fight.js';
 
 /* ---------------- 動態遊戲參數（可由 Laravel 後台調整） ---------------- */
-let CFG={rounds:15, goal:21, randomFishRatio:.35, bgmSpeedRound:10};
+let CFG={rounds:15, goal:21, randomFishRatio:.35, bgmSpeedRound:10,
+         lowFishBias:1.7, targetFishWeight:.35};   // 魚種權重：低難度魚增量、目標魚減量（後台可調）
 
 /* 場地縮圖：以浪高、礁石、急流、氛圍呈現環境，玩家從畫面與敘述自行判斷 */
 function siteThumb(card,w=150,h=84){
@@ -176,7 +178,8 @@ rebuildSpeciesIndex();
 function refillSpots(log=false){
   G.spotCap=siteCaps();
   refillBoard({ spots:G.spots, fishSupply:G.fishSupply, spotCap:G.spotCap,
-                activeBanned:G.activeBanned, randomFishRatio:CFG.randomFishRatio });
+                activeBanned:G.activeBanned, randomFishRatio:CFG.randomFishRatio,
+                lowFishBias:CFG.lowFishBias, targetFishWeight:CFG.targetFishWeight, targetSet:TARGET_SET });
   if(log) addLog("補充魚牌：各點位已補滿。","lg-sys");
   renderSpots();
 }
@@ -243,7 +246,7 @@ function renderPool(){
       const d=document.createElement("div");
       d.className="pf"+(TARGET_SET.has(f.name)?" tgt":"")+(total>__lastPool?" new":"");
       d.title=`${f.name}（${p.name} 釣獲）`;
-      d.appendChild(fishCanvas(f.sp,2));
+      d.appendChild(fishCanvas(f,2));
       const i=document.createElement("i"); i.textContent=p.name.slice(0,1); d.appendChild(i);
       box.appendChild(d);
     });
@@ -980,39 +983,41 @@ function nearestPlayer(p){
   return best||G.players[(G.turnIdx+1)%G.players.length];
 }
 
-/* AI 選點：魚牌面朝下，AI 跟玩家一樣只能靠「深度」推測 —
-   越深的點位越可能藏珍稀魚（成功率也越低）。
-   舊版 lacksQuota 加成過強（+1.3），導致 AI 幾乎整局停在淺水區。
-   現改為溫和偏好，讓 AI 在整個場地均勻分佈。 */
+/* AI 選點：魚牌面朝下，AI 跟玩家一樣只能靠「深度」推測。
+   2026-07-06 改為加權隨機（與 sim/simCore.js 同步雙寫！）：
+   舊版 argmax+微噪音使深水永遠不會被選，電腦玩家全擠淺水區。 */
 function aiPickSpot(p){
-  let best=0,bestScore=-1;
   const needTarget=p.role.target&&!p.catch.some(c=>p.role.target.includes(c.name));
   const total=G.players.reduce((a,q)=>a+q.catch.length,0);
-  const behind=total < (G.round-1)*1.5;
+  const behind=total < (G.round-1)*1.5;           // 集體進度落後 → 全隊優先衝數量
+  const weights=[0,0,0,0,0,0];
   for(let s=0;s<6;s++){
-    if(isBanned(s)||!G.spots[s].length) continue;
+    if(isBanned(s)||!G.spots[s].length) continue; // 只能看見牌數，看不見內容
     const d=Math.min(s+1,5);
-    const pOk=G.site.rule==="gt" ? (6-d)/6 : (7-d)/6;
-    // 深度越深、基礎期望越高（每格 +0.4）
-    let val=1.2 + s*0.4 + Math.min(0.8,G.spots[s].length*0.2);
-    // 需要目標魚 → 主動往深水區（目標魚集中在 diff 4-5）
-    if(needTarget && G.round<=12) val += s>=3 ? 1.8 : 0;
-    // 落後時才給淺水微幅加成，幅度縮小避免過度集中
-    if(behind) val += s<=2 ? 0.6 : 0;
-    // 個人缺數量：淺水輕微優先（只 +0.3，不再壓制深水選擇）
-    if(p.catch.length<p.role.need) val += s<=2 ? 0.3 : 0;
+    const pOk=G.site.rule==="gt" ? (6-d)/6 : (7-d)/6;    // 骰 vs 魚難度（依場地判定邏輯）
+    let val=1+s*.35 + Math.min(1,G.spots[s].length*.2);  // 深處珍稀魚報酬較高 + 魚多較不易撲空
+    if(needTarget) val+= s>=3 ? 1.2 : 0;                 // 缺目標魚 → 深水加成
+    if(behind) val+= s<=2 ? 1.0 : 0;                     // 全隊落後才求穩搶淺水
     if(p.catch.length>=p.role.need&&!needTarget) val*=.85;
-    const score=pOk*val + Math.random()*0.5;
-    if(score>bestScore){bestScore=score; best=s;}
+    weights[s]=pOk*val;
   }
-  return best;
+  let sum=0; for(const w of weights) sum+=w;
+  if(!(sum>0)) return 0;
+  let r=Math.random()*sum;
+  for(let s=0;s<6;s++){ r-=weights[s]; if(r<0) return s; }
+  return 5;
 }
 
 /* ---------------- 抽行動卡 → 判定 → 取魚 ---------------- */
 /* 階段一：命運卡。回傳物件 {proceed, flags} — proceed=true 才進入拉竿階段 */
 async function drawDestiny(p){
+  // 風太大＝二段式：擲骰成功代表順利下竿，「再抽一張命運卡」判定下竿後的情況
+  // （不保證中魚；第二張不會再是風太大，抽到即跳過重抽）
+  let windPassed=false;
+  for(;;){
   if(!G.destinyDeck||!G.destinyDeck.length) G.destinyDeck=buildDestinyDeck(G.site);
   const c=G.destinyDeck.pop();
+  if(windPassed && c.kind==="wind") continue;
   addLog(`🔮 ${p.name} 的命運卡：「${c.title}」— ${c.content}`);
   await showCard("destiny",{animType:c.t,emoji:"🔮",title:c.title,desc:c.content,flavor:c.result},p.human);
   const flags={swallow:false,double:false,hooked:false};
@@ -1038,7 +1043,9 @@ async function drawDestiny(p){
     }
     case "wind":{
       const roll=await rollDice(p,"風太大！擲骰 >2 魚餌才能順利入海",r=>r>2);
-      if(roll>2){ addLog(`${p.name} 頂著大風把餌送進海裡（骰 ${roll}），進入拉竿階段！`,"lg-ok"); return {proceed:true,flags}; }
+      if(roll>2){ windPassed=true;
+        addLog(`${p.name} 頂著大風把餌送進海裡（骰 ${roll}），再抽一張命運卡看看海裡的情況⋯`,"lg-ok");
+        await toast("🌬️ 下竿成功！再抽一張命運卡",1600); break; }
       addLog(`${p.name} 的餌被風吹走了（骰 ${roll}），沒有漁獲。`,"lg-bad");
       await toast("🌬️ 餌被風吹走了⋯"); return {proceed:false,flags};
     }
@@ -1062,6 +1069,7 @@ async function drawDestiny(p){
     case "go_double":  flags.double=true;  flags.hooked=true; return {proceed:true,flags};
     default: flags.hooked=true; return {proceed:true,flags};   // go（魚已上鉤語境）
   }
+  }
 }
 
 async function doFishing(p,spot){
@@ -1070,12 +1078,9 @@ async function doFishing(p,spot){
   const destiny=await drawDestiny(p);
   if(!destiny.proceed){ return endTurn(); }
   // ---- 階段二：拉竿卡 ----
-  // 單鈎命運時，跳過「雙鈎」行動卡，避免情境矛盾
-  let card;
-  do {
-    if(!G.actionDeck.length) G.actionDeck=buildActionDeck(G.site);
-    card=G.actionDeck.pop();
-  } while(!destiny.flags.double && card==="double");
+  // 2026-07-06 規則改造：命運只回答「魚咬不咬餌」，收線事件（含雙鉤）由拉竿卡獨立決定
+  if(!G.actionDeck.length) G.actionDeck=buildActionDeck(G.site);
+  const card=G.actionDeck.pop();
   // 語境切換：魚已上鉤（命運中魚/吞鉤/雙鉤）時使用收線階段的敘述，避免「餌才掉」等矛盾
   const info=(destiny.flags.hooked&&ACTION_INFO[card].hooked)?ACTION_INFO[card].hooked:ACTION_INFO[card];
   addLog(`${p.name} 在${ZONE_NAME[spot]}拉竿，抽到「${info.title}」。`);
@@ -1513,7 +1518,7 @@ function rollDice(p,needStr,passFn,opts={}){
     $("#dice-need").textContent=needStr;
     const fi=$("#dice-fish"); fi.innerHTML="";
     if(opts.fish){ fi.style.display="flex";
-      fi.appendChild(fishCanvas(opts.fish.sp,5));
+      fi.appendChild(fishCanvas(opts.fish,5));
       const b=document.createElement("b"); b.textContent=opts.fish.name+(TARGET_SET.has(opts.fish.name)?" ⭐":""); fi.appendChild(b);
     } else fi.style.display="none";
     $("#dice-result").textContent=""; $("#dice-result").className="";
@@ -1582,8 +1587,8 @@ function showCatch(p,fishes,title){
     const box=$("#catch-fish-show"); box.innerHTML="";
     fishes.forEach(f=>{
       const d=document.createElement("div"); d.className="bigfish";
-      d.innerHTML=`<div class="fname">${f.name}</div><div class="fcat">${f.cat}${TARGET_SET.has(f.name)?" ・⭐ 目標魚":""}</div>`;
-      d.prepend(fishCanvas(f.sp,7));
+      d.innerHTML=`<div class="fname">${f.name}</div><div class="fcat">${f.category}${TARGET_SET.has(f.name)?" ・⭐ 目標魚":""}</div>`;
+      d.prepend(fishCanvas(f,7));
       box.appendChild(d);
     });
     const ov=$("#ov-catch"); ov.classList.add("show");
@@ -1675,44 +1680,14 @@ async function roundEnd(){
 /* =====================================================================
    結算：分享階段 + 勝負
 ===================================================================== */
-function checkPersonal(p){
-  const okCnt=p.catch.length>=p.role.need;
-  const okTgt=!p.role.target || p.catch.some(f=>p.role.target.includes(f.name));
-  return okCnt&&okTgt;
-}
-/* 達悟分享精神：有餘者分魚給缺者（先補目標魚，再補數量） */
+function checkPersonal(p){ return checkPersonalPure(p); }
+/* 達悟分享精神 v2：漁獲視為整體——目標魚全域配對，數量重分配「釣最多的先拿」。
+   純邏輯在 utils/share.js（與 simCore 共用），這裡只做耆老敘事。 */
 function sharePhase(){
-  const notes=[]; const transfers=[];
-  // 1. 目標魚轉讓：持有者已達成自身條件且該魚非自己必需
-  for(const p of G.players){
-    if(checkPersonal(p)||!p.role.target) continue;
-    if(p.catch.some(f=>p.role.target.includes(f.name))) continue;
-    for(const q of G.players){
-      if(q===p) continue;
-      const idx=q.catch.findIndex(f=>p.role.target.includes(f.name) && !(q.role.target&&q.role.target.includes(f.name)&&q.catch.filter(x=>q.role.target.includes(x.name)).length<=1));
-      if(idx>=0 && q.catch.length-1>= (checkPersonal(q)?q.role.need:0)){
-        const f=q.catch.splice(idx,1)[0]; p.catch.push(f);
-        notes.push(`🤝 ${q.name} 把 <b>${f.name}</b> 分享給 ${p.name}（成全他的家庭任務）`);
-        transfers.push({from:q,to:p,fish:f,why:"target"});
-        break;
-      }
-    }
-  }
-  // 2. 數量補齊：多的分給少的
-  let moved=true;
-  while(moved){
-    moved=false;
-    const lack=G.players.find(p=>p.catch.length<p.role.need);
-    const rich=G.players.filter(q=>q.catch.length>q.role.need)
-      .sort((a,b)=>b.catch.length-b.role.need-(a.catch.length-a.role.need));
-    if(lack&&rich.length){
-      const q=rich[0];
-      const idx=q.catch.findIndex(f=>!(q.role.target&&q.role.target.includes(f.name)&&q.catch.filter(x=>q.role.target.includes(x.name)).length<=1));
-      if(idx>=0){ const f=q.catch.splice(idx,1)[0]; lack.catch.push(f);
-        notes.push(`🤝 ${q.name} 分了一條 <b>${f.name}</b> 給 ${lack.name}`);
-        transfers.push({from:q,to:lack,fish:f,why:"count"}); moved=true; }
-    }
-  }
+  const {transfers}=runSharePhase(G.players);
+  const notes=transfers.map(t=> t.why==="target"
+    ? `🤝 ${t.from.name} 釣到的 <b>${t.fish.name}</b>，剛好是 ${t.to.name}（${t.to.role.name}）家裡需要的——分給他`
+    : `🤝 ${t.from.name} 分了一條 <b>${t.fish.name}</b> 給 ${t.to.name}`);
   return {notes,transfers};
 }
 
@@ -1780,7 +1755,7 @@ function playShareScene(transfers){
         const tr=transfers[step];
         const fi=G.players.indexOf(tr.from), ti=G.players.indexOf(tr.to);
         caption(`🧓 耆老拿起 <b style="color:var(--sun)">${tr.fish.name}</b>：<br>「${tr.from.name}，你的魚簍有餘。這條${tr.why==="target"?`正是 <b>${tr.to.role.name}</b> 家裡需要的魚`:"分給還不夠的人"}——<br>${tr.to.name}，拿去吧。」`);
-        flying={cv:fishCanvas(tr.fish.sp,5), t:0,
+        flying={cv:fishCanvas(tr.fish,5), t:0,
           x0:pX[fi], y0:groundY-40, x1:pX[ti], y1:groundY-40};
         SFX.flip();
         return;
