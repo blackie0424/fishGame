@@ -4,9 +4,9 @@
    「魚掙扎時放鬆釣線，魚平靜時收緊釣線」。掙扎中硬拉 → 緊繃度到頂斷線；
    釣線鬆弛太久 → 魚吐鉤游走。魚的「體力」與「掙扎節奏」依魚種設計。
 
-   手竿（無捲線器）：玩家只有一個操作——
-   收／放線（按住＝收線收緊、放開＝放線鬆弛）。
-   （2026-07-06 依 Wu 決策取消「移動站位」機制，降低操作複雜度）
+   手竿（無捲線器）：玩家只有兩個操作——
+   1. 收／放線（按住＝收線收緊、放開＝放線鬆弛）
+   2. 移動站位（魚往左右暴衝時，跟著移動可大幅降低釣線負擔）
 
    難度依原設計：魚牌（撲克牌版本）difficulty 1~5，數字越小越容易。
    - diff 1 於 ≥ 場地維持「自動捕獲」（fishAuto，不進小遊戲）
@@ -23,27 +23,29 @@ const clampDiff = d => { const n = +d; return Math.max(1, Math.min(5, Number.isF
  *  strugMs  掙扎期長度基準
  *  riseStrug 掙扎中仍收線 → 緊繃度每毫秒上升
  *  drainCalm 平靜中收線 → 魚體力每毫秒消耗
- *  （2026-07-06 取消移動站位機制：操作只剩收線/放線一鍵）
+ *  runProb  掙扎時往左右暴衝的機率（需要移動站位跟上）
  */
 export const TENSION_PARAMS = {
-  1: { stamina: 130, calmMs: 2300, teleMs: 640, strugMs: 700,  riseStrug: .152, drainCalm: .030, feint: 1.7  },
-  2: { stamina: 120, calmMs: 2000, teleMs: 520, strugMs: 850,  riseStrug: .158, drainCalm: .026, feint: 1.6  },
-  3: { stamina: 115, calmMs: 1750, teleMs: 420, strugMs: 1000, riseStrug: .162, drainCalm: .023, feint: 1.5  },
-  4: { stamina: 122, calmMs: 1500, teleMs: 330, strugMs: 1150, riseStrug: .168, drainCalm: .021, feint: 1.15 },
-  5: { stamina: 126, calmMs: 1280, teleMs: 250, strugMs: 1300, riseStrug: .178, drainCalm: .019, feint: 1.05 },
+  1: { stamina: 65,  calmMs: 3200, teleMs: 900,  strugMs: 500,  riseStrug: .075, drainCalm: .065, runProb: 0, feint: 1.0 },
+  2: { stamina: 75,  calmMs: 2900, teleMs: 780,  strugMs: 600,  riseStrug: .080, drainCalm: .058, runProb: 0, feint: 1.0 },
+  3: { stamina: 85,  calmMs: 2600, teleMs: 660,  strugMs: 720,  riseStrug: .086, drainCalm: .052, runProb: 0, feint: 1.0 },
+  4: { stamina: 95,  calmMs: 2300, teleMs: 550,  strugMs: 860,  riseStrug: .092, drainCalm: .046, runProb: 0, feint: 1.0 },
+  5: { stamina: 105, calmMs: 2000, teleMs: 440,  strugMs: 1000, riseStrug: .098, drainCalm: .040, runProb: 0, feint: 1.0 },
 };
 
 /** 共同參數 */
 export const TENSION_COMMON = {
-  tensionStart: 32,
-  riseCalm: .0068,      // 平靜中持續收線也會緩慢累積負擔（收放之間要換氣）
-  fallCalm: .052,       // 平靜中放線 → 緊繃度快速下降
-  fallStrug: .020,      // 掙扎中放線 → 緊繃度緩慢下降（魚仍在拉）
-  drainStrug: .0042,    // 掙扎本身消耗魚體力（拉鋸戰必然收斂）
+  tensionStart: 28,
+  riseCalm: .004,       // 平靜中持續收線負擔（放寬）
+  fallCalm: .072,       // 平靜中放線 → 緊繃度快速下降
+  fallStrug: .032,      // 掙扎中放線 → 緊繃度下降（放寬）
+  drainStrug: .006,     // 掙扎本身消耗魚體力（加快收斂）
   slackTh: 5,           // 緊繃度低於此值視為「線太鬆」
-  slackGraceMs: 2400,   // 線太鬆累計超過此時間 → 魚吐鉤（僅平靜期累計）
-  strugFloor: 25,       // 掙扎中魚的拉力會把線拉直：放線時緊繃度不低於此值
-  maxMs: 26000,         // 安全上限（拉鋸戰的極限時長）
+  slackGraceMs: 4000,   // 線太鬆累計超過此時間 → 魚吐鉤（放寬）
+  strugFloor: 18,       // 掙扎中放線時緊繃下限（降低，更容易放鬆）
+  runAligned: 1,        // 無移動機制，暴衝負擔固定（無方向加成）
+  runOpposed: 1,        // 無移動機制
+  maxMs: 35000,         // 安全上限
 };
 
 /** gt 場地（判定邏輯「>」）的加成 */
@@ -63,9 +65,11 @@ export function tensionParams(fish, site) {
 }
 
 /** 建立一場收放拉鋸戰。rng 可注入以利測試。
- *  tick(dt, { pull })：pull true=收線、false=放線（唯一操作）
+ *  tick(dt, { pull, stance })：
+ *    pull   true=收線、false=放線
+ *    stance -1/0/1 玩家站位（跟上 runDir 可省力）
  *  回傳狀態快照：
- *    mode: 'calm'|'tele'|'struggle'   runDir: 恆為 0（移動機制已取消，保留欄位相容）
+ *    mode: 'calm'|'tele'|'struggle'   runDir: -1|0|1
  *    tension: 0~100   stamina: 剩餘體力   staminaMax
  *    done: null|'landed'|'snap'|'spit'   t: 經過毫秒
  */
@@ -79,17 +83,22 @@ export function createTensionFight(fish, site, rng = Math.random) {
   };
   function nextMode() {
     if (st.mode === 'calm') { st.mode = 'tele'; st.modeDur = P.teleMs; }
-    else if (st.mode === 'tele') { st.mode = 'struggle'; st.modeDur = jit(P.strugMs); }
-    else { st.mode = 'calm'; st.modeDur = jit(P.calmMs); }
+    else if (st.mode === 'tele') {
+      st.mode = 'struggle'; st.modeDur = jit(P.strugMs);
+      st.runDir = rng() < P.runProb ? (rng() < .5 ? -1 : 1) : 0;
+    } else { st.mode = 'calm'; st.modeDur = jit(P.calmMs); st.runDir = 0; }
     st.modeT = 0;
   }
-  function step(dt, pull) {
+  function step(dt, pull, stance) {
     st.modeT += dt;
     if (st.modeT >= st.modeDur) nextMode();
     const struggling = st.mode === 'struggle';
+    const af = !struggling || st.runDir === 0 ? 1
+             : stance === st.runDir ? P.runAligned
+             : stance === -st.runDir ? P.runOpposed : 1;
     // 緊繃度
     if (struggling) {
-      st.tension += (pull ? P.riseStrug : -P.fallStrug) * dt;
+      st.tension += (pull ? P.riseStrug * af : -P.fallStrug) * dt;
       if (!pull && st.tension < P.strugFloor)                      // 魚的拉力把線拉直（快速趨近下限）
         st.tension = Math.min(P.strugFloor, st.tension + .12 * dt);
     }
@@ -113,7 +122,7 @@ export function createTensionFight(fish, site, rng = Math.random) {
       let left = Math.max(0, dt);
       while (left > 0 && !st.done) {                              // 大 dt 切片，行為與幀率無關
         const s = Math.min(25, left); left -= s;
-        st.t += s; step(s, !!input.pull);
+        st.t += s; step(s, !!input.pull, input.stance | 0);
       }
       return st;
     },
@@ -124,11 +133,12 @@ export function createTensionFight(fish, site, rng = Math.random) {
  *  延遲感知模型——人看到畫面變化後需要 reactMs 才做出反應：
  *  - 感知到的魚狀態 = 實際狀態延遲 reactMs（前兆越短，越容易「握進掙扎期」）
  *  - 每次掙扎有 missProb 機率整段沒放線（手滑）；前兆越短失手率越高
+ *  - 暴衝時有 stanceProb 機率在 stanceMs 後跟上站位
  */
 export function createBotPolicy(opts = {}, rng = Math.random) {
-  const o = { reactMs: 290, missBase: .13, relaxAt: 62, ...opts };
+  const o = { reactMs: 290, missBase: .13, stanceProb: .75, stanceMs: 420, relaxAt: 62, ...opts };
   let pendMode = 'calm', pendAt = 0, seen = 'calm';
-  let missThis = false;
+  let missThis = false, stance = 0, stanceAt = -1, wantStance = 0, runSeen = 0;
   return function decide(st) {
     if (st.mode !== pendMode) { pendMode = st.mode; pendAt = st.t; }         // 畫面上的變化
     if (st.t - pendAt >= o.reactMs && seen !== pendMode) {                   // 反應完成，更新認知
@@ -136,13 +146,17 @@ export function createBotPolicy(opts = {}, rng = Math.random) {
       if (seen === 'struggle') {
         const tele = st.params.teleMs;                                       // 前兆越短越容易失手
         missThis = rng() < Math.min(.5, o.missBase * (st.params.feint || 1) * Math.pow(370 / Math.max(tele, 120), 1.35));
+        runSeen = st.runDir; wantStance = runSeen; stanceAt = st.t + o.stanceMs;
+        if (rng() >= o.stanceProb) stanceAt = -1;                            // 這次沒跟上站位
       }
+      if (seen === 'calm') { wantStance = 0; stanceAt = st.t + o.stanceMs; }
     }
+    if (stanceAt >= 0 && st.t >= stanceAt) { stance = wantStance; stanceAt = -1; }
     let pull;
     if (seen === 'struggle') pull = missThis;                                // 認知到掙扎 → 放線（除非手滑）
     else if (seen === 'tele') pull = false;                                  // 認知到前兆 → 預先鬆手
     else pull = st.tension < o.relaxAt;                                      // 認知平靜 → 收線，太緊換氣
-    return { pull };
+    return { pull, stance };
   };
 }
 
@@ -158,5 +172,5 @@ export function runBotFight(fish, site, rng = Math.random, botOpts = {}) {
 export function tensionNeedText(fish, site) {
   const d = clampDiff(fish && fish.diff);
   const gt = site && site.rule === 'gt';
-  return `掙扎💢放線、平靜😌收線！ 難度 ${'★'.repeat(d)}${gt ? '（黑水溝級：前兆更短）' : ''}`;
+  return `掙扎💢放線、平靜😌按住收線 難度 ${'★'.repeat(d)}${gt ? '（黑水溝級）' : ''}`;
 }
