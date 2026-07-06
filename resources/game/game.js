@@ -8,7 +8,9 @@ import { SITE_CARDS } from './data/sites.js';
 import { ROLES } from './data/roles.js';
 import { ACTION_INFO, ENV_INFO } from './data/cards.js';
 import { shuffle, rnd, buildFishSupply, buildActionDeck, buildDestinyDeck, buildEnvDeck } from './utils/deck.js';
-import { siteTier, fishPass, fishAuto, fishNeedText } from './utils/rules.js';
+import { siteTier, fishAuto } from './utils/rules.js';
+import { aiReelSuccess } from './utils/reel.js';
+import { createTensionFight, tensionParams, tensionNeedText } from './minigame/tension.js';
 import { FISH_ART } from './data/fishArt.js';
 import { drawFish, drawAvatar, getFishArt, drawPixFisher } from './renderer/sprites.js';
 import { drawSeaBands, drawFishShadow, drawRockRight, tickDrops } from './renderer/scene.js';
@@ -1161,12 +1163,11 @@ async function doFishing(p,spot){
           addLog(`${p.name} 拉起 <b>${f.name}</b>（難度 1）— <b>自動捕獲</b>，不需判定！`,"lg-ok");
           await toast(`🐟 ${f.name} 上鉤即獲！（自動捕獲）`,1400);
         }else{
-          const roll=await rollDice(p,`${f.name} 上鉤了！難度 ${f.diff}：${fishNeedText(f,G.site)}`,r=>fishPass(r,f,G.site),{fight:true,fish:f});
-          if(fishPass(roll,f,G.site)){ got.push(f); addLog(`${p.name} 骰出 ${roll}，成功捕獲 <b>${f.name}</b>（難度 ${f.diff}）！`,"lg-ok"); }
+          const ok=await tensionFight(p,f);                         // 收放節奏（手竿拉鋸）
+          if(ok){ got.push(f); addLog(`${p.name} 在收放拉鋸中降伏，成功捕獲 <b>${f.name}</b>（難度 ${f.diff}）！`,"lg-ok"); }
           else{
             G.spots[src].push(f); SFX.bad();                        // 掙脫的魚回到海裡
-            addLog(`${p.name} 骰出 ${roll}，<b>${f.name}</b> 掙脫游走了（${fishNeedText(f,G.site)}）。`,"lg-bad");
-            await toast(`🎲 ${roll} 點⋯${f.name} 掙脫了`);
+            addLog(`${p.name} 拉鋸失利，<b>${f.name}</b> 掙脫游走了（難度 ${f.diff}）。`,"lg-bad");
           }
         }
         if(got.length>=wantN) break;
@@ -1577,6 +1578,182 @@ function rollDice(p,needStr,passFn,opts={}){
     };
     if(p.human){ btn.style.visibility="visible"; btn.onclick=doRoll; }
     else{ btn.style.visibility="hidden"; setTimeout(doRoll,opts.fight?1400:700); }
+  });
+}
+
+
+/* ===== 收放節奏拉竿（手竿）=====
+   魚掙扎（💢）時放線、平靜（😌）時收線；魚往左右暴衝時移動站位跟上可省力。
+   掙扎中硬拉 → 緊繃度到頂斷線；線鬆太久 → 魚吐鉤。魚力竭（體力歸零）→ 起魚。
+   難度依原設計：魚牌 difficulty（1~5）驅動體力/節奏/暴衝（minigame/tension.js）。
+   AI 不玩小遊戲：aiReelSuccess 沿用原骰子機率決定成敗，僅演出拉鋸過程。 */
+function tensionFight(p,f){
+  return new Promise(res=>{
+    const ov=$("#ov-dice"); ov.classList.add("show");
+    $("#dice-title").textContent=`${p.name} 與 ${f.name} 拉鋸中⋯`;
+    $("#dice-need").textContent=tensionNeedText(f,G.site);
+    const fi=$("#dice-fish"); fi.innerHTML=""; fi.style.display="flex";
+    fi.appendChild(fishCanvas(f,5));
+    const nb=document.createElement("b"); nb.textContent=f.name+(TARGET_SET.has(f.name)?" ⭐":""); fi.appendChild(nb);
+    $("#dice-result").textContent=""; $("#dice-result").className="";
+    const die=$("#die"); die.style.display="none";
+    const cvs=$("#fight-canvas"); cvs.style.display="block";
+    const g=cvs.getContext("2d"); g.imageSmoothingEnabled=false;
+    const W=cvs.width,H=cvs.height, WL=H*.42;
+    const style=Object.assign({skin:"#d8a878",cloth:"#c1272d",hair:"#12100e",u:3},(FISHERS[p.idx]&&FISHERS[p.idx].st)||{},{u:3,noRod:true});
+
+    // ---- 操作狀態（人類） ----
+    let pull=false, stance=0, resolved=false, raf=0, endT=0, endKind=null;
+    const btn=$("#btn-roll"); btn.textContent="🎣 按住收線";
+    // 移動站位按鈕（動態插入，結束時移除 → 不需改 blade）
+    const stepBox=document.createElement("div");
+    stepBox.id="step-box"; stepBox.style.cssText="display:flex;gap:14px;justify-content:center;margin-top:6px";
+    const mkStep=(txt,d)=>{ const b=document.createElement("button"); b.textContent=txt; b.className=btn.className;
+      b.style.cssText="min-width:86px"; b.onpointerdown=e=>{ e.preventDefault(); const ns=Math.max(-1,Math.min(1,stance+d));
+        if(ns!==stance){ stance=ns; SFX.knock(); } }; return b; };
+    const bl=mkStep("⬅ 移動",-1), br=mkStep("移動 ➡",1);
+    stepBox.append(bl,br); btn.parentNode.insertBefore(stepBox,btn.nextSibling);
+    const setPull=v=>{ pull=v; };
+    const onDown=e=>{ e.preventDefault(); setPull(true); };
+    const onUp=()=>setPull(false);
+    const onKey=e=>{ if(e.repeat) return;
+      if(e.code==="Space"||e.code==="Enter"){ e.preventDefault(); setPull(e.type==="keydown"); }
+      if(e.type==="keydown"&&e.code==="ArrowLeft")  bl.onpointerdown(e);
+      if(e.type==="keydown"&&e.code==="ArrowRight") br.onpointerdown(e); };
+    const cleanup=()=>{ btn.onpointerdown=btn.onpointerup=btn.onpointerleave=null;
+      cvs.onpointerdown=cvs.onpointerup=cvs.onpointerleave=null;
+      window.removeEventListener("keydown",onKey); window.removeEventListener("keyup",onKey);
+      stepBox.remove(); btn.textContent="🎲 擲骰子"; };
+
+    // ---- 戰鬥邏輯：人類 = 真實拉鋸；AI = 腳本演出 + 原骰子機率 ----
+    const human=p.human;
+    const fight=human?createTensionFight(f,G.site):null;
+    const aiOk=human?null:aiReelSuccess(f,G.site);
+    const P=fight?fight.st.params:tensionParams(f,G.site);
+    const aiSt={mode:"calm",runDir:0,tension:34,stamina:P.stamina,staminaMax:P.stamina,done:null,t:0,params:P};
+    function aiScript(t){ aiSt.t=t;
+      const seg=(a,b)=>t>=a&&t<b, lerp=(a,b,k)=>a+(b-a)*Math.max(0,Math.min(1,k));
+      if(seg(0,1100)){ aiSt.mode="calm"; aiSt.tension=lerp(34,46,t/1100); aiSt.stamina=P.stamina*lerp(1,.72,t/1100); }
+      else if(seg(1100,1450)){ aiSt.mode="tele"; aiSt.tension=lerp(46,38,(t-1100)/350); }
+      else if(seg(1450,2350)){ aiSt.mode="struggle"; if(!aiSt.runDir&&P.runProb>.3) aiSt.runDir=rnd(2)?1:-1;
+        aiSt.tension=lerp(38,72,(t-1450)/900); }
+      else if(seg(2350,2950)){ aiSt.mode="calm"; aiSt.runDir=0; aiSt.tension=lerp(72,44,(t-2350)/600); aiSt.stamina=P.stamina*lerp(.72,.28,(t-2350)/600); }
+      else if(!aiSt.done){
+        if(aiOk){ aiSt.mode="calm"; aiSt.stamina=P.stamina*lerp(.28,0,(t-2950)/500); if(aiSt.stamina<=0){aiSt.stamina=0; aiSt.done="landed";} }
+        else{ aiSt.mode="struggle"; aiSt.tension=lerp(44,100,(t-2950)/450); if(aiSt.tension>=100) aiSt.done="snap"; }
+      }
+      return aiSt;
+    }
+
+    const splash=[]; const puff=(x,y,n,vy=-2.6)=>{ for(let i=0;i<n;i++) splash.push({x,y,vx:(Math.random()-.5)*4.6,vy:vy-Math.random()*2.4,l:1}); };
+    let lastCreak=0, lastMode="calm", fishX=W*.30, liftK=0;
+
+    const finish=(kind)=>{ if(resolved) return; resolved=true; endKind=kind; endT=performance.now(); cleanup();
+      const r=$("#dice-result"), ok=kind==="landed";
+      if(ok){ SFX.great(); SFX.splash(); puff(fishX,WL,16,-3.4); r.textContent=`💪 ${f.name} 力竭了——起魚！`; r.className="ok"; }
+      else if(kind==="snap"){ SFX.bad(); SFX.knock(); r.textContent=`💥 啪！線斷了，${f.name} 掙脫游走⋯`; r.className="bad"; }
+      else { SFX.bad(); r.textContent=`💨 線太鬆，${f.name} 吐鉤游走了⋯`; r.className="bad"; }
+      setTimeout(()=>{ cancelAnimationFrame(raf); g.clearRect(0,0,W,H); cvs.style.display="none";
+        ov.classList.remove("show"); die.style.display=""; res(ok); },1600);
+    };
+
+    if(human){
+      btn.style.visibility="visible";
+      btn.onpointerdown=onDown; btn.onpointerup=onUp; btn.onpointerleave=onUp;
+      cvs.onpointerdown=onDown; cvs.onpointerup=onUp; cvs.onpointerleave=onUp;
+      window.addEventListener("keydown",onKey); window.addEventListener("keyup",onKey);
+    } else { btn.style.visibility="hidden"; bl.style.visibility=br.style.visibility="hidden"; }
+
+    let t0=performance.now(), tPrev=t0;
+    (function loop(now){
+      now=now||performance.now();
+      const dt=Math.min(64,now-tPrev); tPrev=now;
+      let st;
+      if(human){ st=resolved?fight.st:fight.tick(dt,{pull,stance});
+        if(!resolved&&st.done) finish(st.done); }
+      else { st=resolved?aiSt:aiScript(now-t0);
+        if(!resolved&&aiSt.done) finish(aiSt.done);
+        stance=st.runDir; }                                    // AI 自動跟位（演出）
+
+      // ===== 繪製 =====
+      const struggling=st.mode==="struggle", tele=st.mode==="tele";
+      // 海與岸
+      g.fillStyle="#0b1626"; g.fillRect(0,0,W,H);
+      const grd=g.createLinearGradient(0,WL,0,H); grd.addColorStop(0,"#2b6f8e"); grd.addColorStop(1,"#123246");
+      g.fillStyle=grd; g.fillRect(0,WL,W,H-WL);
+      g.strokeStyle="rgba(216,232,239,.5)"; g.beginPath(); g.moveTo(0,WL); g.lineTo(W,WL); g.stroke();
+      const rockX=W*.74;
+      g.fillStyle="#4e4a44"; g.fillRect(rockX-10,WL+18,W-rockX+10,H-WL);
+      g.fillStyle="#66604f"; g.fillRect(rockX-20,WL+12,W-rockX+20,10);
+      // 站位（三格）與漁夫
+      const stanceX=[-30,0,30];
+      for(let i=-1;i<=1;i++){ g.fillStyle=i===stance?"#f5c542":"rgba(242,237,226,.28)";
+        g.fillRect(rockX+34+stanceX[i+1]-5,WL+30,10,3); }
+      const tug=struggling?Math.sin(now*.05)*st.tension*.03:0;
+      const lean=(pull?5:1)+(struggling?tug:0);
+      const fw=drawPixFisher(g,rockX+34+stanceX[stance+1],WL+26,0,lean,false,null,0,style);
+      // 手竿（無捲線器）：彎曲量 ∝ 緊繃度
+      const bend=st.tension*.42+(pull?7:0), tipX=fw.hx-86-stance*4, tipY=fw.hy-34+bend;
+      g.strokeStyle="#241c14"; g.lineWidth=4;
+      g.beginPath(); g.moveTo(fw.hx,fw.hy); g.quadraticCurveTo(fw.hx-46,fw.hy-44+bend*.5,tipX,tipY); g.stroke();
+      // 魚的位置：暴衝方向漂移；玩家跟位可視覺對齊
+      const runOff=struggling?st.runDir*(26+Math.sin(now*.02)*5):0;
+      fishX+= (W*.30+runOff-fishX)*.08;
+      const lowSt=st.stamina/st.staminaMax<.28;
+      let fy=WL+(lowSt?10:22)+Math.sin(now*.004)*3+(struggling?Math.sin(now*.045)*5:0);
+      // 結束演出
+      if(resolved){ const k=Math.min(1,(now-endT)/700);
+        if(endKind==="landed"){ liftK=k; fishX+=(fw.hx-40-fishX)*.14; fy=WL+16-Math.sin(k*Math.PI)*66; }
+        else fishX-= (endKind==="snap"?7:4.2); }
+      // 釣線：收線＝繃直（緊繃度越高越抖、越紅）；放線＝下垂弧
+      const mouthX=fishX+12, mouthY=Math.min(fy,WL+30);
+      const dangerC=st.tension>85?"#e2554a":st.tension>60?"#f5c542":"rgba(242,237,226,.8)";
+      g.strokeStyle=dangerC; g.lineWidth=1.5;
+      g.beginPath(); g.moveTo(tipX,tipY);
+      if(resolved&&endKind==="snap"){ const rc=Math.min(1,(now-endT)/300);       // 斷線：兩段回彈
+        g.quadraticCurveTo(tipX+8,tipY+18*rc,tipX+3,tipY+34*rc); g.stroke();
+        g.beginPath(); g.moveTo(mouthX,mouthY); g.quadraticCurveTo(mouthX-6,mouthY-14*rc,mouthX-2,mouthY-22*rc); }
+      else if(pull||resolved){ const j=st.tension>70?Math.sin(now*.09)*(st.tension-70)*.06:0;
+        g.quadraticCurveTo((tipX+mouthX)/2,(tipY+mouthY)/2+j,mouthX,mouthY); }
+      else g.quadraticCurveTo((tipX+mouthX)/2,Math.max(tipY,mouthY)+26,mouthX,mouthY);   // 鬆線下垂
+      g.stroke();
+      // 魚（半透明水下 + 掙扎晃動）
+      g.save(); g.globalAlpha=resolved&&endKind==="landed"?1:.85;
+      g.translate(fishX,fy); g.rotate(struggling?Math.sin(now*.05)*.3:Math.sin(now*.003)*.06);
+      const fc=fishCanvas(f,3); g.drawImage(fc,-fc.width/2,-fc.height/2); g.restore();
+      if(!resolved&&(struggling||tele)) puff(fishX,WL,struggling?2:1,-1.8);
+      // 狀態提示
+      g.textAlign="center"; g.font="900 15px monospace";
+      if(tele){ g.fillStyle=(Math.floor(now/90)%2)?"#f5c542":"#d94f2a"; g.fillText("⚡ 要暴衝了⋯準備放線",W*.42,20); }
+      else if(struggling){ g.fillStyle=(Math.floor(now/110)%2)?"#e2554a":"#f5c542"; g.fillText("💢 掙扎中——放線！",W*.42,20);
+        if(st.runDir){ g.font="900 20px monospace";
+          g.fillText(st.runDir<0?"⬅⬅":"➡➡",fishX,fy-20);
+          g.font="700 11px monospace"; g.fillStyle="#d8e8ef"; g.fillText("移動站位跟上！",W*.42,34); } }
+      else if(!resolved){ g.fillStyle="#9fd6a8"; g.fillText("😌 平靜——按住收線",W*.42,20); }
+      g.textAlign="left";
+      // 魚體力條（上）
+      const sw=130, sx=8, sy=28;
+      g.fillStyle="rgba(0,0,0,.45)"; g.fillRect(sx-2,sy-11,sw+4,16);
+      g.fillStyle="#d8e8ef"; g.font="700 9px monospace"; g.fillText("魚的體力",sx,sy-13);
+      g.fillStyle="#20303f"; g.fillRect(sx,sy-8,sw,10);
+      g.fillStyle=lowSt?"#f5c542":"#6fcf97"; g.fillRect(sx,sy-8,sw*Math.max(0,st.stamina/st.staminaMax),10);
+      // 釣線緊繃條（下）
+      const tw=W-16, tx=8, ty=H-10;
+      g.fillStyle="rgba(0,0,0,.45)"; g.fillRect(tx-2,ty-13,tw+4,15);
+      g.fillStyle="#d8e8ef"; g.fillText("釣線緊繃",tx,ty-15);
+      g.fillStyle="#2e5e46"; g.fillRect(tx,ty-9,tw*.6,8);
+      g.fillStyle="#8a7a2e"; g.fillRect(tx+tw*.6,ty-9,tw*.25,8);
+      g.fillStyle="#7a3030"; g.fillRect(tx+tw*.85,ty-9,tw*.15,8);
+      g.fillStyle=dangerC; g.fillRect(tx,ty-9,tw*st.tension/100,8);
+      g.strokeStyle="#f2ede2"; g.strokeRect(tx+tw*st.tension/100-1,ty-11,2,12);
+      // 水花
+      for(let i=splash.length-1;i>=0;i--){ const s=splash[i]; s.x+=s.vx; s.y+=s.vy; s.vy+=.24; s.l-=.03;
+        if(s.l<=0){ splash.splice(i,1); continue; } g.fillStyle=`rgba(216,232,239,${s.l})`; g.fillRect(s.x,s.y,3,3); }
+      // 音效：模式轉換水花、高張力吱嘎
+      if(st.mode!==lastMode){ if(st.mode==="struggle"){ SFX.flip(); puff(fishX,WL,5); } lastMode=st.mode; }
+      if(pull&&st.tension>78&&now-lastCreak>430){ SFX.creak(); lastCreak=now; }
+      if(!resolved||now-endT<1500) raf=requestAnimationFrame(loop);
+    })(t0);
   });
 }
 

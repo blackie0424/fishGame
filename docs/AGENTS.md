@@ -24,6 +24,8 @@ resources/game/
 │  └─ board.js          # 盤面純邏輯（siteCaps/pickBannedSpots/refillBoard/boardHasFish）
 ├─ config/serverConfig.js  # 後台設定套用（applyServerConfig + 防呆）
 ├─ state/GameState.js   # 純狀態（createGameState/advanceTurn）
+├─ minigame/tension.js  # 收放節奏拉竿小遊戲（人類玩技巧；AI 用 utils/reel.js 沿用骰子機率）
+├─ sim/simCore.js       # 整場無頭模擬核心（後台勝率試算 + CLI 共用）
 └─ renderer/            # Canvas 繪圖（sprites/scene/fight）
 tests/js/               # vitest，13 檔 122+ 測試
 ```
@@ -106,6 +108,8 @@ php artisan view:clear            # blade 有改就要跑
 | e72c8a4 | renderPool 等 4 處 f.sp + 1 處 f.cat 舊格式殘留 → 開局卡死；回歸測試 drawFishContract.test.js |
 | 1ae6560 | 命運/拉竿兩段式改造 + 整場模擬器 simCore + 勝率報告 docs/balance-2026-07-06.md |
 | 1db1457 | 耆老分魚 v2（utils/share.js 共用純邏輯）+ 風太大二段式 |
+| cf84136→3b4685e | ⚠️ 以過時基底覆蓋提交造成三項回歸（f.sp 崩潰等），已回復。**教訓：接手前先 git pull ＋ npx vitest run** |
+| (tension) | 釣法改版：hit/double 判定由骰子改為「收放節奏」小遊戲（人類技巧制、AI 保持原機率 → 勝率校準不變）|
 
 ## 待辦：前端重構 Phase 6–9
 
