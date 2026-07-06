@@ -104,3 +104,28 @@ describe('ENV_INFO', () => {
     });
   });
 });
+
+/* ============ 命運卡簡化（2026-07-06 規則改造） ============
+   命運卡只回答「魚咬不咬餌」：go 類只剩「中魚」；
+   單鉤/雙鉤/吞鉤等收線事件全數由拉竿卡決定。 */
+describe('命運卡簡化：go 類只剩中魚', () => {
+  it('三個層級的命運牌組都不再配發吞鉤/雙鉤', () => {
+    ['low', 'mid', 'high'].forEach(tier => {
+      expect(DESTINY_MIX[tier].swallow ?? 0).toBe(0);
+      expect(DESTINY_MIX[tier].double ?? 0).toBe(0);
+    });
+  });
+  it('吞鉤/雙鉤張數併入中魚（low 24／mid 22／high 24）', () => {
+    expect(DESTINY_MIX.low.hooked).toBe(24);
+    expect(DESTINY_MIX.mid.hooked).toBe(22);
+    expect(DESTINY_MIX.high.hooked).toBe(24);
+  });
+});
+
+describe('拉竿雙鉤卡成為獨立事件', () => {
+  it('game.js 不再跳過雙鉤拉竿卡（舊：單鉤命運時 do-while 重抽）', async () => {
+    const { readFileSync } = await import('node:fs');
+    const src = readFileSync(new URL('../../../resources/game/game.js', import.meta.url), 'utf8');
+    expect(src.includes('while(!destiny.flags.double && card==="double")')).toBe(false);
+  });
+});

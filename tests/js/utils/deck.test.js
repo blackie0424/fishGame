@@ -35,9 +35,9 @@ describe('rnd', () => {
 });
 
 describe('buildFishSupply', () => {
-  it('共 52 張魚牌', () => {
+  it('共 54 張魚牌', () => {
     const deck = buildFishSupply();
-    expect(deck.length).toBe(52);
+    expect(deck.length).toBe(54);
   });
 
   it('每張牌都有 name、diff、category', () => {

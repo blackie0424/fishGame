@@ -1033,7 +1033,7 @@ async function drawDestiny(p){
     }
     case "wind":{
       const roll=await rollDice(p,"風太大！擲骰 >2 魚餌才能順利入海",r=>r>2);
-      if(roll>2){ addLog(`${p.name} 頂著大風把餌送進海裡（骰 ${roll}），進入拉竿階段！`,"lg-ok"); return {proceed:true,flags}; }
+      if(roll>2){ flags.hooked=true; addLog(`${p.name} 頂著大風把餌送進海裡（骰 ${roll}），進入拉竿階段！`,"lg-ok"); return {proceed:true,flags}; }
       addLog(`${p.name} 的餌被風吹走了（骰 ${roll}），沒有漁獲。`,"lg-bad");
       await toast("🌬️ 餌被風吹走了⋯"); return {proceed:false,flags};
     }
@@ -1065,12 +1065,9 @@ async function doFishing(p,spot){
   const destiny=await drawDestiny(p);
   if(!destiny.proceed){ return endTurn(); }
   // ---- 階段二：拉竿卡 ----
-  // 單鈎命運時，跳過「雙鈎」行動卡，避免情境矛盾
-  let card;
-  do {
-    if(!G.actionDeck.length) G.actionDeck=buildActionDeck(G.site);
-    card=G.actionDeck.pop();
-  } while(!destiny.flags.double && card==="double");
+  // 2026-07-06 規則改造：命運只回答「魚咬不咬餌」，收線事件（含雙鉤）由拉竿卡獨立決定
+  if(!G.actionDeck.length) G.actionDeck=buildActionDeck(G.site);
+  const card=G.actionDeck.pop();
   // 語境切換：魚已上鉤（命運中魚/吞鉤/雙鉤）時使用收線階段的敘述，避免「餌才掉」等矛盾
   const info=(destiny.flags.hooked&&ACTION_INFO[card].hooked)?ACTION_INFO[card].hooked:ACTION_INFO[card];
   addLog(`${p.name} 在${ZONE_NAME[spot]}拉竿，抽到「${info.title}」。`);

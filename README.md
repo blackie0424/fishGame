@@ -45,7 +45,7 @@ php artisan serve
 |---|---|
 | 魚牌 | 魚種、張數、難度（＝捕獲判定門檻）、像素圖參數 |
 | 場地卡 | 判定邏輯（≥/>）、限制點位、場上總張數、場景視覺 |
-| 命運卡 / 拉竿卡 | 三欄張數＝低/中/高難度的牌組配比（現值為勝率校準結果：低 ≥90%、中 75-85%、高 60-70%）|
+| 命運卡 / 拉竿卡 | 三欄張數＝低/中/高難度的牌組配比。**兩段式設計（2026-07-06 改造）**：命運卡只回答「魚咬不咬餌」（環境與運氣，go 類只有「中魚」）；拉竿卡決定收線結果（單鉤判定/雙鉤 2 條/吞鉤白拿+休息/脫鉤/纏線/鑽礁）。吞鉤/雙鉤命運卡保留但張數 0，後台可重新啟用 |
 | 自然的反撲 | 回合結束事件的張數與文案 |
 | 遊戲設定 | 回合數、集體目標、隱藏機率區座標、補魚隨機比例、魚種權重（`low_fish_bias`／`target_fish_weight`）、音樂加速回合 |
 
@@ -119,7 +119,7 @@ xychart-beta
 ### 想再調整難度？
 
 1. 後台「遊戲設定」直接改 `low_fish_bias`、`target_fish_weight`（儲存即清快取，玩家重整生效）。例如更狠的 `2.2 / 0.2` 會把目標魚占比再壓到 ~9%。
-2. 改前先跑模擬看數字：`node scripts/simFishDistribution.mjs 2.2 0.2`
+2. 改前先跑模擬看數字：`node scripts/simFishDistribution.mjs 2.2 0.2`（補魚分佈）、`node scripts/simGame.mjs 2000 15 3,4,5`（整場勝率，環境變數 `LOW_BIAS`/`TGT_W`/`GOAL` 可覆寫）
 3. 機制實作在 `resources/game/utils/board.js` 的 `fishWeight()` 與 `refillBoard()`，回歸測試在 `tests/js/utils/board.test.js`。
 
 ## Zeabur 部署備忘

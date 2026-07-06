@@ -18,8 +18,8 @@ export const FISH_SPECIES = [
   {name:"Tapez",    count:2, diff:4, category:"Rahet", colors:["#9b6fd8","#e2d5f5","#6a3fa8"]},
   {name:"Acyod",    count:2, diff:5, category:"Rahet", colors:["#e06060","#f7c9c9","#a83030"]},
   {name:"Cilat",    count:2, diff:5, category:"Rahet", colors:["#bfcfe0","#f0f5fa","#7f97b2"]},
-  {name:"Ilek",     count:1, diff:5, category:"Oyod",  colors:["#f2c94c","#fbeec2","#c1912a"]},
-  {name:"Arawa",    count:1, diff:5, category:"Oyod",  colors:["#60c9e0","#c9eff7","#3095a8"]},
+  {name:"Ilek",     count:2, diff:5, category:"Oyod",  colors:["#f2c94c","#fbeec2","#c1912a"]},
+  {name:"Arawa",    count:2, diff:5, category:"Oyod",  colors:["#60c9e0","#c9eff7","#3095a8"]},
 ];
 
 export const TARGET_SET = new Set(["Ilek", "Cilat", "Acyod", "Tapez"]);

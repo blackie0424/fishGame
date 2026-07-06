@@ -58,17 +58,17 @@ tests/js/               # vitest，13 檔 122+ 測試
 npm test                          # vitest 全套（改任何 js 前後都要跑）
 node --check resources/game/game.js  # 語法檢查
 npm run build                     # Vite 打包（部署管線會自動跑）
-php artisan migrate --seed        # 建表 + 種子資料（52 條魚、15 場地）
+php artisan migrate --seed        # 建表 + 種子資料（54 條魚、15 場地）
 php artisan view:clear            # blade 有改就要跑
 ```
 
 ## 遊戲核心數字（改平衡前先知道）
 
-- 魚牌總量 **52**；場上容量 = `site.total`（低階 10／中階 7／高階 5），其餘留在魚庫 `fishSupply`
+- 魚牌總量 **54**（2026-07-06 起 Ilek/Arawa 各 2 張，解「兩角色搶 1 張 Ilek」死局）；場上容量 = `site.total`（低階 10／中階 7／高階 5），其餘留在魚庫 `fishSupply`
 - 6 個水域點位；禁放數 = `site.banned.length`，**每回合隨機重抽位置**
 - 15 回合 × 每回合 4 人出竿；命運卡約 80% 進入拉竿
 - 勝率校準目標：低階 ~94%／中階 ~77%／高階 ~62%（用無頭模擬驗證，≥300 局）
-- 「水域沒有魚」訊息**只允許**在 52 條全被釣光的終局出現（`ensureBoardHasFish` 保證）
+- 「水域沒有魚」訊息**只允許**在 54 條全被釣光的終局出現（`ensureBoardHasFish` 保證）
 
 ## 文化與設計規範（不可違反）
 

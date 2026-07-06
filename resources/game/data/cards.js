@@ -39,9 +39,10 @@ export const DESTINY_CARDS = [
   {t:"snag",    n:1, title:"釣到地球了",    content:"魚餌被礁石卡住，需要擲骰子",                 result:"沒有漁獲。擲骰 ≤3 魚鉤收不回來，休息一回合處理釣具", kind:"snag"},
   {t:"tangle",  n:1, title:"跟夥伴纏線了",  content:"魚線跟夥伴的纏繞在一起，需要擲骰子",         result:"沒有漁獲。擲骰 ≤3 釣具損壞，與身旁玩家一起休息一回合", kind:"tangle"},
   {t:"wind",    n:2, title:"風太大了",      content:"因為風太大，需要用骰子決定釣具是否順利入海", result:"擲骰 >2 魚餌順利入海，進入拉竿階段",               kind:"wind"},
-  {t:"hooked",  n:9, title:"中魚了",        content:"有魚上鉤了，把握好機會",                     result:"進入拉竿階段！",                                   kind:"go"},
-  {t:"swallow", n:4, title:"中魚了（吞鉤）",content:"有魚吞鉤了，把握好機會",                     result:"進入拉竿階段！若順利釣起，需休息一回合處理吞鉤",   kind:"go_swallow"},
-  {t:"double",  n:4, title:"雙鉤中魚了",    content:"使用兩門魚鉤都中魚了，把握好機會",           result:"進入拉竿階段！若拉竿成功可額外多得 1 條（含鄰近遞補）", kind:"go_double"},
+  // 2026-07-06 規則改造：命運只回答「魚咬不咬餌」，吞鉤/雙鉤等收線事件移至拉竿卡（n:0 保留供後台重新啟用）
+  {t:"hooked",  n:17,title:"中魚了",        content:"有魚上鉤了，把握好機會",                     result:"進入拉竿階段！",                                   kind:"go"},
+  {t:"swallow", n:0, title:"中魚了（吞鉤）",content:"有魚吞鉤了，把握好機會",                     result:"進入拉竿階段！若順利釣起，需休息一回合處理吞鉤",   kind:"go_swallow"},
+  {t:"double",  n:0, title:"雙鉤中魚了",    content:"使用兩門魚鉤都中魚了，把握好機會",           result:"進入拉竿階段！若拉竿成功可額外多得 1 條（含鄰近遞補）", kind:"go_double"},
   {t:"eel",     n:2, title:"遇到海鰻",      content:"海鰻會偷吃漁獲，需要用骰子決定漁獲狀態",     result:"擲骰 >2 保住漁獲；否則損失 1 條放回魚牌堆",       kind:"eel"},
   {t:"bigwave", n:1, title:"大浪來襲",      content:"有一波浪推來了，快把腳抬高，避開浪潮",       result:"擲骰 >2 躲過浪潮；否則跌倒，休息一回合",           kind:"bigwave"},
   {t:"seen1",   n:1, title:"被魚發現了",    content:"魚線用太粗了，被魚抓包了",                   result:"沒有漁獲",                                         kind:"fail"},
@@ -49,9 +50,9 @@ export const DESTINY_CARDS = [
 ];
 
 export const DESTINY_MIX = {
-  low:  {surge:1,baitoff:1,baiteat:0,gearbad:0,seen1:1,seen2:0,snag:1,tangle:1,wind:1,hooked:15,swallow:3,double:6,eel:0,bigwave:0},
-  mid:  {surge:1,baitoff:1,baiteat:0,gearbad:0,seen1:1,seen2:0,snag:1,tangle:1,wind:1,hooked:14,swallow:3,double:5,eel:1,bigwave:1},
-  high: {surge:1,baitoff:1,baiteat:0,gearbad:0,seen1:1,seen2:0,snag:1,tangle:1,wind:1,hooked:14,swallow:3,double:7,eel:0,bigwave:0},
+  low:  {surge:1,baitoff:1,baiteat:0,gearbad:0,seen1:1,seen2:0,snag:1,tangle:1,wind:1,hooked:24,swallow:0,double:0,eel:0,bigwave:0},
+  mid:  {surge:1,baitoff:1,baiteat:0,gearbad:0,seen1:1,seen2:0,snag:1,tangle:1,wind:1,hooked:22,swallow:0,double:0,eel:1,bigwave:1},
+  high: {surge:1,baitoff:1,baiteat:0,gearbad:0,seen1:1,seen2:0,snag:1,tangle:1,wind:1,hooked:24,swallow:0,double:0,eel:0,bigwave:0},
 };
 
 export const ENV_COUNTS = {calm:5, eel:2, hightide:2, wave:3, lowtide:2, chat:1, escape:2};

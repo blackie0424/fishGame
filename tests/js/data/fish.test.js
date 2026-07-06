@@ -2,23 +2,23 @@ import { describe, it, expect } from 'vitest';
 import { FISH_SPECIES, TARGET_SET } from '../../../resources/game/data/fish.js';
 
 describe('FISH_SPECIES', () => {
-  it('共 52 張魚牌', () => {
+  it('共 54 張魚牌（2026-07-06 Ilek/Arawa 各增至 2 張）', () => {
     const total = FISH_SPECIES.reduce((sum, f) => sum + f.count, 0);
-    expect(total).toBe(52);
+    expect(total).toBe(54);
   });
 
   it('共 20 種魚', () => {
     expect(FISH_SPECIES.length).toBe(20);
   });
 
-  it('難度分布正確（1×17、2×19、3×5、4×5、5×6 — 依來源 xlsx）', () => {
+  it('難度分布正確（1×17、2×19、3×5、4×5、5×8 — 2026-07-06 Ilek/Arawa 各+1）', () => {
     const byDiff = {};
     FISH_SPECIES.forEach(f => { byDiff[f.diff] = (byDiff[f.diff] || 0) + f.count; });
     expect(byDiff[1]).toBe(17);
     expect(byDiff[2]).toBe(19);
     expect(byDiff[3]).toBe(5);
     expect(byDiff[4]).toBe(5);
-    expect(byDiff[5]).toBe(6);
+    expect(byDiff[5]).toBe(8);
   });
 
   it('每條魚都有 name、count、diff、category、colors', () => {
