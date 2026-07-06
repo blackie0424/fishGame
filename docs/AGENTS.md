@@ -20,11 +20,11 @@ resources/game/
 ├─ data/                # 純資料（fish/sites/cards/roles/fishArt/intro）
 ├─ utils/
 │  ├─ deck.js           # 洗牌、建牌堆（buildFishSupply 等）
-│  ├─ rules.js          # 判定規則（fishPass/fishAuto/siteTier）
+│  ├─ rules.js          # 判定規則（fishPass/siteTier；fishAuto 已隨自動捕獲取消移除）
 │  └─ board.js          # 盤面純邏輯（siteCaps/pickBannedSpots/refillBoard/boardHasFish）
 ├─ config/serverConfig.js  # 後台設定套用（applyServerConfig + 防呆）
 ├─ state/GameState.js   # 純狀態（createGameState/advanceTurn）
-├─ minigame/tension.js  # 收放節奏拉竿小遊戲（人類玩技巧；AI 用 utils/reel.js 沿用骰子機率）
+├─ minigame/tension.js  # 收放節奏拉竿小遊戲（收線放寬：全難度成功率 ≥95%，AI 同步）
 ├─ sim/simCore.js       # 整場無頭模擬核心（後台勝率試算 + CLI 共用）
 └─ renderer/            # Canvas 繪圖（sprites/scene/fight）
 tests/js/               # vitest，13 檔 122+ 測試
@@ -69,7 +69,7 @@ php artisan view:clear            # blade 有改就要跑
 - 魚牌總量 **54**（2026-07-06 起 Ilek/Arawa 各 2 張，解「兩角色搶 1 張 Ilek」死局）；場上容量 = `site.total`（低階 10／中階 7／高階 5），其餘留在魚庫 `fishSupply`
 - 6 個水域點位；禁放數 = `site.banned.length`，**每回合隨機重抽位置**
 - 15 回合 × 每回合 4 人出竿；命運卡約 80% 進入拉竿
-- 勝率校準目標：低階 ~94%／中階 ~77%／高階 ~62%（用無頭模擬驗證，≥300 局）
+- 勝率：2026-07-06 收線放寬（成功率一律 ≥95%、自動捕獲取消）後全面重校，**舊目標曲線（低94/中77/高62）已失效且場地難度反轉（高階最易）**——現況數據與選項見 docs/balance-2026-07-06.md 附錄二
 - 「水域沒有魚」訊息**只允許**在 54 條全被釣光的終局出現（`ensureBoardHasFish` 保證）
 
 ## 文化與設計規範（不可違反）

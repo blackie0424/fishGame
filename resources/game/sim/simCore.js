@@ -6,7 +6,8 @@ import { TARGET_SET } from '../data/fish.js';
 import { SITE_CARDS } from '../data/sites.js';
 import { ROLES } from '../data/roles.js';
 import { shuffle, rnd, buildFishSupply, buildActionDeck, buildDestinyDeck, buildEnvDeck } from '../utils/deck.js';
-import { siteTier, fishPass, fishAuto } from '../utils/rules.js';
+import { siteTier } from '../utils/rules.js';
+import { aiReelSuccess } from '../utils/reel.js';
 import { pickBannedSpots, siteCaps, boardHasFish, refillBoard } from '../utils/board.js';
 import { sharePhase, checkPersonal } from '../utils/share.js';
 
@@ -152,12 +153,9 @@ function doFishing(G, p, spot, W) {
           src = near.length ? near[rnd(near.length)] : nb[rnd(nb.length)];
         }
         const f = G.spots[src].splice(rnd(G.spots[src].length), 1)[0];
-        if (fishAuto(f, G.site)) got.push(f);
-        else {
-          const r = roll();
-          if (fishPass(r, f, G.site)) got.push(f);
-          else G.spots[src].push(f);
-        }
+        // 自動捕獲已取消（2026-07-06）；拉竿成敗與遊戲一致（aiReelSuccess ≥95%）
+        if (aiReelSuccess(f, G.site)) got.push(f);
+        else G.spots[src].push(f);
         if (got.length >= wantN) break;
       }
       if (got.length) {

@@ -9,9 +9,9 @@
    （2026-07-06 依 Wu 決策取消「移動站位」機制，降低操作複雜度）
 
    難度依原設計：魚牌（撲克牌版本）difficulty 1~5，數字越小越容易。
-   - diff 1 於 ≥ 場地維持「自動捕獲」（fishAuto，不進小遊戲）
+   （自動捕獲已於 2026-07-06 取消：所有魚一律進收放拉鋸）
    - gt 場地（黑水溝級）：前兆更短、掙扎更猛、魚更耐拉
-   AI 不玩小遊戲：沿用原骰子機率（utils/reel.js aiReelSuccess），勝率校準不變。
+   AI 不玩小遊戲：aiReelSuccess 與放寬後的玩家成功率一致（≥95%）。
 ===================================================================== */
 
 const clampDiff = d => { const n = +d; return Math.max(1, Math.min(5, Number.isFinite(n) ? n : 3)); };
@@ -25,12 +25,15 @@ const clampDiff = d => { const n = +d; return Math.max(1, Math.min(5, Number.isF
  *  drainCalm 平靜中收線 → 魚體力每毫秒消耗
  *  （2026-07-06 取消移動站位機制：操作只剩收線/放線一鍵）
  */
+/* 收線放寬（2026-07-06 Wu 決策）：目標成功率全難度 ≥95%——
+   前兆拉長（最少 500ms）、掙扎上升大幅減緩（單次失誤不再直接斷線），
+   失敗僅發生於持續無視節奏。難度差異保留在「手感」（節奏快慢）而非成敗。 */
 export const TENSION_PARAMS = {
-  1: { stamina: 130, calmMs: 2300, teleMs: 640, strugMs: 700,  riseStrug: .152, drainCalm: .030, feint: 1.7  },
-  2: { stamina: 120, calmMs: 2000, teleMs: 520, strugMs: 850,  riseStrug: .158, drainCalm: .026, feint: 1.6  },
-  3: { stamina: 115, calmMs: 1750, teleMs: 420, strugMs: 1000, riseStrug: .162, drainCalm: .023, feint: 1.5  },
-  4: { stamina: 122, calmMs: 1500, teleMs: 330, strugMs: 1150, riseStrug: .168, drainCalm: .021, feint: 1.15 },
-  5: { stamina: 126, calmMs: 1280, teleMs: 250, strugMs: 1300, riseStrug: .178, drainCalm: .019, feint: 1.05 },
+  1: { stamina: 115, calmMs: 2300, teleMs: 900, strugMs: 650, riseStrug: .034, drainCalm: .034, feint: 1.0 },
+  2: { stamina: 115, calmMs: 2100, teleMs: 800, strugMs: 720, riseStrug: .036, drainCalm: .031, feint: 1.0 },
+  3: { stamina: 118, calmMs: 1900, teleMs: 700, strugMs: 800, riseStrug: .039, drainCalm: .028, feint: 1.0 },
+  4: { stamina: 120, calmMs: 1700, teleMs: 600, strugMs: 880, riseStrug: .041, drainCalm: .026, feint: 1.0 },
+  5: { stamina: 122, calmMs: 1500, teleMs: 500, strugMs: 960, riseStrug: .044, drainCalm: .024, feint: 1.0 },
 };
 
 /** 共同參數 */

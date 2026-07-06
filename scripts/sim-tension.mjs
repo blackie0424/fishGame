@@ -13,7 +13,7 @@ console.log(`每格 ${N} 場（一般玩家機器人：反應 300ms、13% 手滑
 for (const rule of ['gte', 'gt']) {
   console.log(`── ${rule === 'gt' ? 'gt 場地（黑水溝級，判定 >）' : '一般場地（判定 ≥）'} ──`);
   for (let d = 1; d <= 5; d++) {
-    if (d === 1 && rule !== 'gt') { console.log('diff 1  自動捕獲（fishAuto，不進小遊戲）'); continue; }
+    
     let land = 0, snap = 0, spit = 0;
     for (let i = 0; i < N; i++) {
       const r = runBotFight({ diff: d }, { rule });

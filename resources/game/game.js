@@ -8,7 +8,7 @@ import { SITE_CARDS } from './data/sites.js';
 import { ROLES } from './data/roles.js';
 import { ACTION_INFO, ENV_INFO } from './data/cards.js';
 import { shuffle, rnd, buildFishSupply, buildActionDeck, buildDestinyDeck, buildEnvDeck } from './utils/deck.js';
-import { siteTier, fishAuto } from './utils/rules.js';
+import { siteTier } from './utils/rules.js';
 import { aiReelSuccess } from './utils/reel.js';
 import { createTensionFight, tensionParams, tensionNeedText } from './minigame/tension.js';
 import { FISH_ART } from './data/fishArt.js';
@@ -1158,17 +1158,12 @@ async function doFishing(p,spot){
           if(src!==spot) addLog(`啟動「鄰近遞補」：由鄰近水域補上一條！`,"lg-sys");
         }
         const f=G.spots[src].splice(rnd(G.spots[src].length),1)[0];
-        if(fishAuto(f,G.site)){                                     // 難度 1 於 ≥ 場地：自動捕獲
-          got.push(f); SFX.good();
-          addLog(`${p.name} 拉起 <b>${f.name}</b>（難度 1）— <b>自動捕獲</b>，不需判定！`,"lg-ok");
-          await toast(`🐟 ${f.name} 上鉤即獲！（自動捕獲）`,1400);
-        }else{
-          const ok=await tensionFight(p,f);                         // 收放節奏（手竿拉鋸）
-          if(ok){ got.push(f); addLog(`${p.name} 在收放拉鋸中降伏，成功捕獲 <b>${f.name}</b>（難度 ${f.diff}）！`,"lg-ok"); }
-          else{
-            G.spots[src].push(f); SFX.bad();                        // 掙脫的魚回到海裡
-            addLog(`${p.name} 拉鋸失利，<b>${f.name}</b> 掙脫游走了（難度 ${f.diff}）。`,"lg-bad");
-          }
+        // 自動捕獲已取消（2026-07-06）：所有魚一律進收放拉鋸（成功率已放寬至 ≥95%）
+        const ok=await tensionFight(p,f);
+        if(ok){ got.push(f); addLog(`${p.name} 在收放拉鋸中降伏，成功捕獲 <b>${f.name}</b>（難度 ${f.diff}）！`,"lg-ok"); }
+        else{
+          G.spots[src].push(f); SFX.bad();                          // 掙脫的魚回到海裡
+          addLog(`${p.name} 拉鋸失利，<b>${f.name}</b> 掙脫游走了（難度 ${f.diff}）。`,"lg-bad");
         }
         if(got.length>=wantN) break;
       }
@@ -1614,7 +1609,8 @@ function tensionFight(p,f){
     const cleanup=()=>{ btn.onpointerdown=btn.onpointerup=btn.onpointerleave=null;
       cvs.onpointerdown=cvs.onpointerup=cvs.onpointerleave=null;
       window.removeEventListener("keydown",onKey); window.removeEventListener("keyup",onKey);
-      btn.textContent="🎲 擲骰子"; };
+      // 結束演出期間按鈕已無作用 → 直接隱藏（rollDice 下次使用時會自行重設文字與可見性）
+      btn.style.visibility="hidden"; btn.textContent="🎲 擲骰子"; };
 
     // ---- 戰鬥邏輯：人類 = 真實拉鋸；AI = 腳本演出 + 原骰子機率 ----
     const human=p.human;

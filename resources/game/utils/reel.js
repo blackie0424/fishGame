@@ -4,12 +4,15 @@
    等真咬瞬間單擊拉竿，時機正確即釣起；點在假咬會嚇跑魚。
 
    難度依原設計：魚牌 difficulty 1~5，數字越小越容易。
-   - diff 1：≥ 場地維持「自動捕獲」（fishAuto，不進小遊戲）
    - diff 2~5：真咬後的拉竿時限遞減（見 REEL_WINDOWS）
-   - gt 場地（黑水溝級）：時限 ×0.75，且 diff 1 不再自動（沿用舊制語意）
-   AI 不玩小遊戲：沿用原骰子機率（fishPass 擲虛擬骰），勝率校準不變。
+   - gt 場地（黑水溝級）：時限 ×0.75
+   AI 不玩小遊戲：aiReelSuccess 與放寬後的玩家成功率一致。
 ===================================================================== */
-import { fishPass } from './rules.js';
+
+/** 收線放寬（2026-07-06 Wu 決策）：拉竿成功率一律 ≥95%——
+ *  釣起來是「儀式」不是「篩子」，難度由找魚/目標魚稀有度/回合數承擔。
+ *  自動捕獲同時取消：所有魚（含 diff1）一律進收放拉鋸。 */
+export const REEL_SUCCESS_PROB = 0.95;
 
 /** 各難度的真咬反應時限（毫秒），數字越小越容易 → 時限越長 */
 export const REEL_WINDOWS = { 1: 1000, 2: 820, 3: 620, 4: 460, 5: 320 };
@@ -25,10 +28,9 @@ export function reelWindowMs(fish, site) {
   return site && site.rule === 'gt' ? Math.round(base * GT_WINDOW_SCALE) : base;
 }
 
-/** AI 拉竿成敗：擲一顆虛擬骰走原判定（機率分布與舊制完全相同） */
+/** AI 拉竿成敗：與放寬後的玩家一致（全難度/場地 REEL_SUCCESS_PROB） */
 export function aiReelSuccess(fish, site, rand = Math.random) {
-  const roll = 1 + Math.floor(rand() * 6);
-  return fishPass(roll, fish, site);
+  return rand() < REEL_SUCCESS_PROB;
 }
 
 /** 假咬與真咬的時間腳本。回傳 { nibbles:[t1,t2..], biteAt }（相對開始的毫秒）

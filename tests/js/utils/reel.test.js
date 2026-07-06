@@ -20,19 +20,13 @@ describe('reelWindowMs — 難度對應時限（數字越小越容易 → 時限
   });
 });
 
-describe('aiReelSuccess — AI 沿用原骰子機率（勝率校準不變）', () => {
-  it('gte 場地：難度 d 成功率 = (7-d)/6（虛擬骰逐一驗證）', () => {
-    for (const d of [2, 3, 4, 5]) {
-      let ok = 0;
-      for (let face = 0; face < 6; face++) ok += aiReelSuccess(fish(d), gte, () => face / 6) ? 1 : 0;
-      expect(ok).toBe(7 - d);
-    }
-  });
-  it('gt 場地：難度 d 成功率 = (6-d)/6', () => {
-    for (const d of [1, 3, 5]) {
-      let ok = 0;
-      for (let face = 0; face < 6; face++) ok += aiReelSuccess(fish(d), gt, () => face / 6) ? 1 : 0;
-      expect(ok).toBe(6 - d);
+describe('aiReelSuccess — 收線放寬後與玩家一致（≥95%）', () => {
+  it('收線放寬（2026-07-06）：全難度/場地成功率 = REEL_SUCCESS_PROB ≥ 0.95', async () => {
+    const { REEL_SUCCESS_PROB } = await import('../../../resources/game/utils/reel.js');
+    expect(REEL_SUCCESS_PROB).toBeGreaterThanOrEqual(0.95);
+    for (const site of [gte, gt]) for (const d of [1, 3, 5]) {
+      expect(aiReelSuccess(fish(d), site, () => REEL_SUCCESS_PROB - 0.001)).toBe(true);
+      expect(aiReelSuccess(fish(d), site, () => REEL_SUCCESS_PROB + 0.001)).toBe(false);
     }
   });
 });

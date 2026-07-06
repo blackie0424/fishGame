@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { siteTier, fishPass, fishAuto, fishNeedText } from '../../../resources/game/utils/rules.js';
+import * as rules from '../../../resources/game/utils/rules.js';
+import { siteTier, fishPass, fishNeedText } from '../../../resources/game/utils/rules.js';
 import { SITE_CARDS } from '../../../resources/game/data/sites.js';
 
 const siteGte10 = SITE_CARDS.find(s => s.rule === 'gte' && s.total >= 10); // low
@@ -40,20 +41,9 @@ describe('fishPass', () => {
   });
 });
 
-describe('fishAuto', () => {
-  const diff1 = { diff: 1 };
-  const diff2 = { diff: 2 };
-
-  it('gte 場地 + 難度1 → 自動捕獲', () => {
-    expect(fishAuto(diff1, siteGte10)).toBe(true);
-  });
-
-  it('gte 場地 + 難度2 → 非自動', () => {
-    expect(fishAuto(diff2, siteGte10)).toBe(false);
-  });
-
-  it('gt 場地 + 難度1 → 非自動（gt 無自動捕獲）', () => {
-    expect(fishAuto(diff1, siteGt)).toBe(false);
+describe('自動捕獲已取消（2026-07-06 Wu 決策）', () => {
+  it('rules.js 不再提供 fishAuto——所有魚一律進收放拉鋸', () => {
+    expect(rules.fishAuto).toBeUndefined();
   });
 });
 

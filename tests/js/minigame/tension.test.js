@@ -42,10 +42,10 @@ describe('createTensionFight — 核心收放規則', () => {
     expect(f.st.tension).toBeLessThan(t1);
     expect(t1).toBeGreaterThan(t0 - 1);   // 平靜收線緊繃度只微幅變化
   });
-  it('掙扎中持續收線 → 緊繃度到頂斷線（snap）', () => {
-    const f = createTensionFight(fish(4), GTE, seqRng([.5, .9, .5])); // runProb 判定不觸發暴衝
-    while (f.st.mode !== 'struggle' && !f.st.done) f.tick(25, { pull: false, stance: 0 });
-    while (f.st.mode === 'struggle' && !f.st.done) f.tick(25, { pull: true, stance: 0 });
+  it('無視掙扎、從頭按住不放 → 終將斷線（snap）——放寬後仍要有失敗可能', () => {
+    // 放寬後單次失誤不再立即斷線，但完全不放線必然累積到斷
+    const f = createTensionFight(fish(4), GTE, seqRng([.5, .9, .5]));
+    while (!f.st.done) f.tick(25, { pull: true });
     expect(f.st.done).toBe('snap');
   });
   it('永遠放線 → 線太鬆，魚吐鉤（spit）', () => {
@@ -86,17 +86,15 @@ describe('createTensionFight — 核心收放規則', () => {
   });
 });
 
-describe('難度曲線（機器人成功率）', () => {
-  it('依原設計：difficulty 越小越容易；gt 場地更難', () => {
+describe('難度曲線（機器人成功率）— 收線放寬（2026-07-06 Wu 決策）', () => {
+  it('所有難度、所有場地：一般玩家成功率 ≥ 95%', () => {
     const rate = (d, site, seed) => { let ok = 0; const rng = lcg(seed);
-      for (let i = 0; i < 220; i++) ok += runBotFight(fish(d), site, rng) === 'landed' ? 1 : 0;
-      return ok / 220; };
-    const gte = [0, 0, rate(2, GTE, 1), rate(3, GTE, 2), rate(4, GTE, 3), rate(5, GTE, 4)];
-    expect(gte[2]).toBeGreaterThan(gte[3]);
-    expect(gte[3]).toBeGreaterThan(gte[4]);
-    expect(gte[4]).toBeGreaterThan(gte[5]);
-    expect(rate(3, GT, 5)).toBeLessThan(gte[3]);
-    expect(rate(5, GT, 6)).toBeLessThan(gte[5] + .05);
+      for (let i = 0; i < 300; i++) ok += runBotFight(fish(d), site, rng) === 'landed' ? 1 : 0;
+      return ok / 300; };
+    for (let d = 1; d <= 5; d++) {
+      expect(rate(d, GTE, d), `gte diff${d}`).toBeGreaterThanOrEqual(0.95);
+      expect(rate(d, GT, d + 10), `gt diff${d}`).toBeGreaterThanOrEqual(0.95);
+    }
   });
 });
 
