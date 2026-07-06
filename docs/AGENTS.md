@@ -104,3 +104,12 @@ php artisan view:clear            # blade 有改就要跑
 | f00f159 | drawFish 改物件解構（phase1 格式事故餘波之一） |
 | 36431eb | 前端改 Vite 打包（hash 檔名），源碼移至 resources/game，根絕 stale cache |
 | e72c8a4 | renderPool 等 4 處 f.sp + 1 處 f.cat 舊格式殘留 → 開局卡死；回歸測試 drawFishContract.test.js |
+| 1ae6560 | 命運/拉竿兩段式改造 + 整場模擬器 simCore + 勝率報告 docs/balance-2026-07-06.md |
+| 1db1457 | 耆老分魚 v2（utils/share.js 共用純邏輯）+ 風太大二段式 |
+
+## 待辦：前端重構 Phase 6–9
+
+`game.js` 仍有 ~1,860 行多職責問題，且 drawDestiny/doFishing/roundEnd/aiPickSpot
+**在 game.js 與 sim/simCore.js 重複實作、改規則必須手動雙寫**。
+分階段執行計畫（含執行紀律、hooks 介面、驗收清單）見
+**`docs/refactor-plan-frontend.md`** ——接手的 AI 請照該文件逐 Phase 執行。
