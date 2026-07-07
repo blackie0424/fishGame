@@ -20,6 +20,7 @@ import { sharePhase as runSharePhase, checkPersonal as checkPersonalPure } from 
 import { applyServerConfig as applyCfg } from './config/serverConfig.js';
 import { INTRO_SCENES } from './data/intro.js';
 import { startFight } from './renderer/fight.js';
+import { poolFishMeta, playerChipMeta } from './utils/hud.js';
 
 /* ---------------- 動態遊戲參數（可由 Laravel 後台調整） ---------------- */
 let CFG={rounds:15, goal:21, randomFishRatio:.35, bgmSpeedRound:10,
@@ -238,6 +239,33 @@ function taskHTML(p){
   }
   return t;
 }
+/* 共用浮動提示：掛在 body 上，不會被橫向卷軸容器裁切 */
+const hudTip=(()=>{
+  let el=null;
+  function ensure(){
+    if(!el){
+      el=document.createElement("div"); el.id="hud-tip"; document.body.appendChild(el);
+      document.addEventListener("pointerdown",e=>{ if(!e.target.closest(".pf,.pchip")) hide(); });
+    }
+    return el;
+  }
+  function show(target,html){
+    const t=ensure(); t.innerHTML=html; t.classList.add("show");
+    const r=target.getBoundingClientRect();
+    let x=r.left+r.width/2-t.offsetWidth/2;
+    x=Math.max(6,Math.min(x,innerWidth-t.offsetWidth-6));
+    let y=r.bottom+8;
+    if(y+t.offsetHeight>innerHeight-6) y=r.top-t.offsetHeight-8;
+    t.style.left=x+"px"; t.style.top=y+"px";
+  }
+  function hide(){ if(el) el.classList.remove("show"); }
+  return {show,hide};
+})();
+function bindTip(elm,html){
+  elm.addEventListener("pointerenter",e=>{ if(e.pointerType!=="touch") hudTip.show(elm,html); });
+  elm.addEventListener("pointerleave",()=>hudTip.hide());
+  elm.addEventListener("click",()=>hudTip.show(elm,html)); // 觸控裝置：點一下顯示
+}
 let __lastPool=0;
 function renderPool(){
   const box=$("#pool-fish"); box.innerHTML="";
@@ -245,15 +273,18 @@ function renderPool(){
   G.players.forEach(p=>{
     p.catch.forEach(f=>{
       total++;
+      const m=poolFishMeta(f,p.name,TARGET_SET);
       const d=document.createElement("div");
-      d.className="pf"+(TARGET_SET.has(f.name)?" tgt":"")+(total>__lastPool?" new":"");
-      d.title=`${f.name}（${p.name} 釣獲）`;
+      d.className="pf"+(m.isTarget?" tgt":"")+(total>__lastPool?" new":"");
+      d.setAttribute("aria-label",m.label);
       d.appendChild(fishCanvas(f,2));
-      const i=document.createElement("i"); i.textContent=p.name.slice(0,1); d.appendChild(i);
+      const i=document.createElement("i"); i.textContent=m.initial; d.appendChild(i);
+      bindTip(d,`<span class="tip-t">${m.name}</span><br>${p.name} 釣獲`);
       box.appendChild(d);
     });
   });
   if(!total) box.innerHTML='<span id="pool-empty">還沒有漁獲，快下竿吧！</span>';
+  else if(total>__lastPool) box.scrollLeft=box.scrollWidth; // 新漁獲自動捲到最右
   $("#pool-count").textContent=`${total}/${CFG.goal}`;
   __lastPool=total;
 }
@@ -277,14 +308,16 @@ function renderPlayers(){
   $("#ui-goaltext").textContent=`全體漁獲 ${total} / ${CFG.goal}`;
   $("#ui-round").textContent=G.round;
   G.players.forEach((p,i)=>{
+    const m=playerChipMeta(p,{isTurn:i===G.turnIdx,over:G.over,mode:G.mode});
     const c=document.createElement("div");
-    c.className="pcard pixel-panel"+(i===G.turnIdx&&!G.over?" turn":"");
-    let badges="";
-    if(p.human) badges+=`<span class="badge-you">${G.mode==="ai"?"你":"真人"}</span>`;
-    if(p.rest>0) badges+=`<span class="badge-rest">休息</span>`;
-    c.innerHTML=badges+`<div class="pname">${p.name}</div><div class="prole">${p.role.emoji} ${p.role.name}</div>
-      <div class="pcatch">🐟 ${p.catch.length} 條</div><div class="ptask">${taskHTML(p)}</div>`;
-    c.insertBefore(avatarCanvas(p.role,4), c.querySelector(".pname"));
+    c.className="pchip pixel-panel"+(m.isTurn?" turn":"");
+    const badges=(m.you?`<span class="badge-you">${m.you}</span>`:"")
+                +(m.rest?`<span class="badge-rest">休息</span>`:"");
+    const sum=m.task.allDone?`<span class="done">${m.taskSummary}</span>`:m.taskSummary;
+    c.innerHTML=`<div class="pcol"><div class="pcname">${m.name}${badges}</div>
+      <div class="pcsub"><span class="pccatch">🐟${m.catchCount}</span>・${sum}</div></div>`;
+    c.insertBefore(avatarCanvas(p.role,3), c.firstChild);
+    bindTip(c,`<span class="tip-t">${m.roleLabel} — ${m.name}</span><br>${p.role.desc}<br>${taskHTML(p)}${m.rest?"<br>😴 休息中":""}`);
     row.appendChild(c);
   });
 }

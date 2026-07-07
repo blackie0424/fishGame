@@ -81,16 +81,16 @@
     <button class="iconbtn" id="btn-help" title="規則">📖</button>
   </div>
 
+  <div class="pixel-panel" id="pool-panel">
+    <div class="pool-h">🧺 部落漁獲 <span id="pool-count" class="pxfont"></span></div>
+    <div id="pool-fish"></div>
+  </div>
+
   <div id="board-wrap">
     <canvas id="sea-canvas" width="720" height="480"></canvas>
   </div>
 
   <div id="players-row"></div>
-
-  <div class="pixel-panel" id="pool-panel">
-    <div class="pool-h">🧺 部落漁獲 <span id="pool-count" class="pxfont"></span></div>
-    <div id="pool-fish"></div>
-  </div>
 
   <div class="pixel-panel" id="log"></div>
 
