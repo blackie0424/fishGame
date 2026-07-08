@@ -11,6 +11,7 @@ export default defineConfig({
                 'resources/game/game.css',
                 'resources/game/game.js',
                 'resources/game/simUI.js',
+                'resources/game/adminFishPreview.js',
             ],
             refresh: true,
         }),

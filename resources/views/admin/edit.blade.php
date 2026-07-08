@@ -35,6 +35,9 @@
         </div>
       @endif
       <textarea name="{{ $name }}" id="{{ $entity==='fish'&&$name==='art' ? 'fish-art-textarea' : '' }}">{{ is_string($val)?$val:(is_null($val)?'':json_encode($val, JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT)) }}</textarea>
+      @if($entity==='fish' && $name==='art')
+        @vite('resources/game/adminFishPreview.js')
+      @endif
     @elseif($f['type']==='number')
       <input type="number" step="any" name="{{ $name }}" value="{{ $val }}">
     @else
@@ -149,6 +152,7 @@ document.addEventListener('DOMContentLoaded', function () {
       .then(function (data) {
         if (data.art) {
           textarea.value = JSON.stringify(data.art, null, 2);
+          textarea.dispatchEvent(new Event('input'));  // 讓像素預覽同步刷新
           status.textContent = '分析完成，請確認並調整後儲存。';
           status.style.color = '#060';
         } else {

@@ -102,7 +102,7 @@ class FishImageAnalyzerController extends Controller
         // 白名單 + 值域驗證：巢狀/多餘欄位一律丟棄，避免髒資料寫進魚種 art
         $hex = fn ($v) => is_string($v) && preg_match('/^#[0-9a-fA-F]{3,8}$/', $v);
         $art = [];
-        if (in_array($raw['shape'] ?? null, ['oval', 'long'], true))                  $art['shape'] = $raw['shape'];
+        if (in_array($raw['shape'] ?? null, ['oval', 'long', 'deep'], true))          $art['shape'] = $raw['shape'];
         if (in_array($raw['pat'] ?? null, ['plain', 'spots', 'bars', 'hline'], true)) $art['pat']   = $raw['pat'];
         foreach (['body', 'belly', 'acc', 'tail'] as $k) if ($hex($raw[$k] ?? null))  $art[$k]      = $raw[$k];
         if (($raw['bigEye'] ?? false) === true) $art['bigEye'] = true;
@@ -147,7 +147,7 @@ class FishImageAnalyzerController extends Controller
 請分析這張魚類圖片，輸出用於像素圖生成的 JSON 參數。
 
 必填欄位：
-- shape：魚體形狀，只能是 "oval"（橢圓）或 "long"（細長）
+- shape：魚體形狀，只能是 "oval"（橢圓）、"long"（細長）或 "deep"（厚身高背，如刺尾鯛、蝴蝶魚、砲彈魚）
 - body：魚身主色，十六進位色碼（如 "#3a8a5c"）
 - belly：腹部較淺色，十六進位色碼
 - acc：魚鰭或花紋強調色，十六進位色碼

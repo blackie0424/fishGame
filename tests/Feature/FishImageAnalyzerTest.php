@@ -55,6 +55,15 @@ class FishImageAnalyzerTest extends TestCase
         $this->post()->assertOk()->assertJsonPath('art.shape', 'oval');
     }
 
+    public function test_deep_形狀是合法值_對齊前端渲染器(): void
+    {
+        // 前端 drawFish 支援 oval/long/deep 三種形狀（Acyod、Cilat、Tapez 等厚身魚用 deep），
+        // 白名單漏掉 deep 會讓 AI 回傳的厚身魚形狀被丟棄 → 解析失敗
+        $deep = '{"shape":"deep","body":"#2c4468","belly":"#c8b4c4","acc":"#e0a030","pat":"hline"}';
+        $this->gemini($this->okBody($deep));
+        $this->post()->assertOk()->assertJsonPath('art.shape', 'deep');
+    }
+
     public function test_巢狀_JSON_不會污染_art_僅保留白名單欄位(): void
     {
         $nested = '{"shape":"oval","body":"#3a8a5c","belly":"#dfeee2","acc":"#c1272d","pat":"spots","meta":{"confidence":0.92}}';
