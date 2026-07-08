@@ -8,3 +8,11 @@ export function parseArtJson(text) {
   if (!HEX.test(raw.body || '') || !HEX.test(raw.belly || '') || !HEX.test(raw.acc || '')) return null;
   return Object.assign({ shape: 'oval', pat: 'plain' }, raw);
 }
+
+/* 原始去背圖路徑：art.photo 優先（上傳流程可自訂），否則依魚名小寫對應
+   /images/removebg/<name>.png（檔名慣例見 docs/fish-pixel-art.md） */
+export function removebgPhotoUrl(name, art) {
+  if (art && typeof art.photo === 'string' && art.photo) return art.photo;
+  if (typeof name === 'string' && name.trim()) return `/images/removebg/${name.trim().toLowerCase()}.png`;
+  return null;
+}
