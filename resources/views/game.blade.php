@@ -94,6 +94,16 @@
 
   <div class="pixel-panel" id="log"></div>
 
+  <!-- 桌機側欄紀錄：左＝海況/系統、右＝行動/結果（手機與中尺寸由 CSS 控制顯示） -->
+  <div class="pixel-panel side-log" id="log-env">
+    <div class="side-log-h pxfont">🌊 SEA 海況</div>
+    <div class="side-log-body"></div>
+  </div>
+  <div class="pixel-panel side-log" id="log-act">
+    <div class="side-log-h pxfont">🎣 LOG 行動</div>
+    <div class="side-log-body"></div>
+  </div>
+
   <div id="action-panel">
     <div id="turn-banner">—</div>
     <div id="action-btns"></div>

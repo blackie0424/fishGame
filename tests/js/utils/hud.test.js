@@ -98,3 +98,19 @@ describe('playerChipMeta（緊湊玩家籤的顯示資料）', () => {
     expect(playerChipMeta(p, { isTurn: false, over: false, mode: 'ai' }).taskSummary).toBe('1/5・cilat✓');
   });
 });
+
+describe('logTarget（紀錄分流：左側海況、右側行動）', () => {
+  it('環境與系統訊息 → env（左側）', async () => {
+    const { logTarget } = await import('../../../resources/game/utils/hud.js');
+    expect(logTarget('lg-env')).toBe('env');
+    expect(logTarget('lg-sys')).toBe('env');
+  });
+
+  it('玩家行動與結果 → action（右側）', async () => {
+    const { logTarget } = await import('../../../resources/game/utils/hud.js');
+    expect(logTarget('')).toBe('action');
+    expect(logTarget('lg-ok')).toBe('action');
+    expect(logTarget('lg-bad')).toBe('action');
+    expect(logTarget(undefined)).toBe('action');
+  });
+});
