@@ -25,6 +25,11 @@ export function taskParts(p) {
   };
 }
 
+/** 紀錄分流：環境/系統訊息進左側海況欄，其餘（玩家行動與結果）進右側行動欄 */
+export function logTarget(cls) {
+  return cls === 'lg-env' || cls === 'lg-sys' ? 'env' : 'action';
+}
+
 /** 緊湊玩家籤的顯示資料 */
 export function playerChipMeta(p, { isTurn, over, mode }) {
   const t = taskParts(p);

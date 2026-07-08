@@ -20,7 +20,7 @@ import { sharePhase as runSharePhase, checkPersonal as checkPersonalPure } from 
 import { applyServerConfig as applyCfg } from './config/serverConfig.js';
 import { INTRO_SCENES } from './data/intro.js';
 import { startFight } from './renderer/fight.js';
-import { poolFishMeta, playerChipMeta } from './utils/hud.js';
+import { poolFishMeta, playerChipMeta, logTarget } from './utils/hud.js';
 
 /* ---------------- 動態遊戲參數（可由 Laravel 後台調整） ---------------- */
 let CFG={rounds:15, goal:21, randomFishRatio:.35, bgmSpeedRound:10,
@@ -217,7 +217,14 @@ function reshuffleBoard(){
    UI 基礎
 ===================================================================== */
 function showScreen(id){ document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active")); $(id).classList.add("active"); window.scrollTo(0,0); }
-function addLog(msg,cls=""){ const p=document.createElement("p"); p.className=cls; p.innerHTML=msg; const L=$("#log"); L.prepend(p); while(L.children.length>40) L.lastChild.remove(); }
+function addLog(msg,cls=""){
+  // 同一筆寫進下方紀錄（中尺寸螢幕用）與對應側欄（桌機用），顯示與否由 CSS 斷點決定
+  const put=sel=>{ const L=$(sel); if(!L) return;
+    const p=document.createElement("p"); p.className=cls; p.innerHTML=msg;
+    L.prepend(p); while(L.children.length>40) L.lastChild.remove(); };
+  put("#log");
+  put(logTarget(cls)==="env" ? "#log-env .side-log-body" : "#log-act .side-log-body");
+}
 async function toast(msg,ms=2000){ $("#toast-text").innerHTML=msg; $("#ov-toast").classList.add("show"); await sleep(ms); $("#ov-toast").classList.remove("show"); }
 
 function needText(spot){ return G.site.rule==="gt" ? `骰出 > ${spot+1}` : `骰出 ≥ ${spot+1}`; }
@@ -910,6 +917,7 @@ async function launchGame(){
            u:r.id===0?3:4 } });                                     // 小孩體型較小
   }
   $("#log").innerHTML="";
+  document.querySelectorAll(".side-log-body").forEach(el=>el.innerHTML="");
   addLog(`🎣 釣魚去！今天的釣場：<b>📍 ${G.site.name}</b> — ${G.site.desc}（場上共 ${G.site.total} 張魚牌）${CFG.rounds} 回合內全體目標 ${CFG.goal} 條魚。`,"lg-sys");
   renderPlayers();
   showScreen("#screen-game");
