@@ -35,3 +35,22 @@ describe('parseArtJson（後台 art 欄位 → 像素預覽參數）', () => {
     expect(parseArtJson('"hi"')).toBeNull();
   });
 });
+
+describe('removebgPhotoUrl（後台並排對照的原始去背圖路徑）', () => {
+  it('依魚名小寫對應 /images/removebg/<name>.png', async () => {
+    const { removebgPhotoUrl } = await import('../../../resources/game/utils/artJson.js');
+    expect(removebgPhotoUrl('Acyod', {})).toBe('/images/removebg/acyod.png');
+    expect(removebgPhotoUrl('  Amingang ', {})).toBe('/images/removebg/amingang.png');
+  });
+
+  it('art.photo 存在時優先使用（未來上傳流程可自訂路徑）', async () => {
+    const { removebgPhotoUrl } = await import('../../../resources/game/utils/artJson.js');
+    expect(removebgPhotoUrl('Acyod', { photo: '/storage/fish/custom.png' })).toBe('/storage/fish/custom.png');
+  });
+
+  it('無魚名且無 photo 時回傳 null', async () => {
+    const { removebgPhotoUrl } = await import('../../../resources/game/utils/artJson.js');
+    expect(removebgPhotoUrl('', {})).toBeNull();
+    expect(removebgPhotoUrl(null, null)).toBeNull();
+  });
+});
